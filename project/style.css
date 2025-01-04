@@ -5,15 +5,15 @@
 }
 
 body {
-   display: flex;
+    width: 100%;
+    height: 100vh;
+    display: flex;
     justify-content: center;
     align-items: center;
-    width: 100vw;
-    height: 100vh;
 }
 
 #canvas {
-    background-color: antiquewhite;
     width: 100%;
     height: 100%;
+    background-color: #000000;
 }
