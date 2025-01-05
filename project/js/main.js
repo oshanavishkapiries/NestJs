@@ -1,13 +1,14 @@
 import Scene from "./Scene.js";
-import Spirit from "./Spirit.js";
+import Ball from "./obj/Ball.js";
+
+const width = window.innerWidth;
+const height = window.innerHeight;
 
 const scene = new Scene();
 
-const spirit1 = new Spirit(0, 0, 50, 50, "red", "player1");
-const spirit2 = new Spirit(60, 0, 50, 50, "red", "player2"); 
+// object
+const ball = new Ball(width / 2, height / 2, 30, "white");
 
-scene.addSpirit(spirit1);
-scene.addSpirit(spirit2);
+scene.addSpirit(ball);
 
 scene.start();
-

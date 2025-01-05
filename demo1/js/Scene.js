@@ -2,6 +2,7 @@ export default class Scene {
   isMouseDown = false;
   mouseX = 0;
   mouseY = 0;
+  isStarted = false;
 
   constructor() {
     this.canvas = document.getElementById("canvas");
@@ -10,6 +11,18 @@ export default class Scene {
     this.canvas.width = window.innerWidth * window.devicePixelRatio;
     this.canvas.height = window.innerHeight * window.devicePixelRatio;
     this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    const playButton = document.getElementById("playButton");
+    playButton.addEventListener("click", () => {
+      if (!this.isStarted) {
+        this.isStarted = true;
+        playButton.textContent = "Stop";
+        this.render();
+      } else {
+        this.isStarted = false;
+        playButton.textContent = "Play";
+      }
+    });
 
     this.canvas.addEventListener("mousedown", () => {
       this.isMouseDown = true;
@@ -29,20 +42,19 @@ export default class Scene {
     this.spirits.push(spirit);
   }
 
-  start() {
-    this.render();
-  }
-
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.spirits.forEach((spirit) => {
       spirit.update({
+        canvas: this.canvas,
         ctx: this.ctx,
         mouseX: this.mouseX,
         mouseY: this.mouseY,
         isMouseDown: this.isMouseDown,
       });
     });
-    requestAnimationFrame(this.render.bind(this));
+    if (this.isStarted) {
+      requestAnimationFrame(this.render.bind(this));
+    }
   }
 }
