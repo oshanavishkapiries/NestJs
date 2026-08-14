@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Compact GTA V Radial Selector Wheel (No Zoom Animations) */
+/* Jupyter Notebook / Compact GTA V Radial Selector Wheel (Seamless Hover Identification) */
 
 :root {
   --bg-dark: #121212;
@@ -221,7 +221,7 @@ canvas.widget-anim-canvas {
 .widget-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
+  width: 10px;
   height: 10px;
   border-radius: var(--radius-sm);
   background: var(--accent-color);
@@ -289,7 +289,7 @@ canvas.widget-anim-canvas {
 .edge-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nw-resize; }
 
 /* ==========================================================================
-   🎮 COMPACT GTA V RADIAL SELECTOR WHEEL (300px, No Zoom Scale Animations)
+   🎮 COMPACT GTA V RADIAL SELECTOR WHEEL (300px, Fixed Scale)
    ========================================================================== */
 .gta-radial-wheel {
   position: absolute;
@@ -336,7 +336,8 @@ canvas.widget-anim-canvas {
   filter: drop-shadow(0 0 6px rgba(2, 132, 199, 0.6));
 }
 
-.primary-wedge.danger-wedge:hover {
+.primary-wedge.danger-wedge:hover,
+.primary-wedge.danger-wedge.active-wedge {
   fill: rgba(239, 68, 68, 0.88);
   stroke: #ef4444;
   filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
@@ -366,7 +367,7 @@ canvas.widget-anim-canvas {
   pointer-events: none;
 }
 
-/* Primary Icons Overlay (FIXED SIZE - NO ZOOM SCALE ANIMATION) */
+/* Primary Icons Overlay (PASS MOUSE EVENTS DIRECTLY TO SVG WEDGES UNDERNEATH) */
 .wheel-primary-icons {
   position: absolute;
   inset: 0;
@@ -382,13 +383,12 @@ canvas.widget-anim-canvas {
   justify-content: center;
   gap: 1px;
   color: var(--text-main);
-  pointer-events: auto;
+  pointer-events: none; /* Mouse passes directly to SVG path! */
   cursor: pointer;
   transition: color 0.15s ease;
 }
 
-.primary-icon-item.active,
-.primary-icon-item:hover {
+.primary-icon-item.active {
   color: var(--text-bright);
 }
 
@@ -401,7 +401,7 @@ canvas.widget-anim-canvas {
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
-/* Sub-Menu Outer Arc Options Overlay (NO ZOOM SCALE ANIMATION) */
+/* Sub-Menu Outer Arc Options Overlay */
 .wheel-submenu-container {
   position: absolute;
   inset: 0;

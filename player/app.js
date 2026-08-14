@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px, Fixed Scale)
- * Direct Primary Tools + Outer Expanded Arc Sub-Menus for Colors & Sizes
+ * Seamless Hover Identification for all Wedges (including UNDO & CLEAR)
  */
 
 class VideoWidget {
@@ -379,6 +379,7 @@ class FramePlayer {
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
     this.activeCategory = null;
+    this.hoveredCategory = null; // Currently hovered wedge ID
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
@@ -504,9 +505,12 @@ class FramePlayer {
     // 1. Render Primary Ring Wedges
     categories.forEach(cat => {
       const d = this.describeArcPath(cx, cy, rInner, rPrimary, cat.startAngle, cat.endAngle);
-      const isActive = this.activeCategory === cat.id || (cat.type === 'tool' && this.activeTool === cat.id);
+      const isHovered = this.hoveredCategory === cat.id;
+      const isToolActive = (cat.type === 'tool' && this.activeTool === cat.id);
+      const isActiveCategory = (this.activeCategory === cat.id);
+      const isHighlighted = isHovered || isToolActive || isActiveCategory;
 
-      svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isActive ? 'active-wedge' : ''}" data-cat="${cat.id}" data-type="${cat.type}" d="${d}"></path>`;
+      svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isHighlighted ? 'active-wedge' : ''}" data-cat="${cat.id}" data-type="${cat.type}" d="${d}"></path>`;
 
       const midAngleRad = (((cat.startAngle + cat.endAngle) / 2) * Math.PI) / 180;
       const midR = (rInner + rPrimary) / 2;
@@ -514,7 +518,7 @@ class FramePlayer {
       const iconY = cy + midR * Math.sin(midAngleRad);
 
       iconsHtml += `
-        <div class="primary-icon-item ${isActive ? 'active' : ''}" data-cat="${cat.id}" data-type="${cat.type}" style="left:${iconX}px; top:${iconY}px; transform:translate(-50%, -50%);">
+        <div class="primary-icon-item ${isHighlighted ? 'active' : ''}" data-cat="${cat.id}" data-type="${cat.type}" style="left:${iconX}px; top:${iconY}px; transform:translate(-50%, -50%);">
           ${cat.iconSvg}
           <span class="slice-cat-label">${cat.title}</span>
         </div>
@@ -582,20 +586,19 @@ class FramePlayer {
 
   bindWheelInteractions() {
     const primaryWedges = this.wheelSvgBg.querySelectorAll('.primary-wedge');
-    const primaryIcons = this.primaryIconsLayer.querySelectorAll('.primary-icon-item');
 
     const handleCategoryHover = (catId, catType) => {
+      this.hoveredCategory = catId;
       if (catType === 'expand') {
         if (this.activeCategory !== catId) {
           this.activeCategory = catId;
-          this.renderTwoTierRadialWheel();
         }
       } else {
         if (this.activeCategory !== null) {
           this.activeCategory = null;
-          this.renderTwoTierRadialWheel();
         }
       }
+      this.renderTwoTierRadialWheel();
     };
 
     const handleCategoryClick = (catId, catType) => {
@@ -613,17 +616,15 @@ class FramePlayer {
 
     primaryWedges.forEach(w => {
       w.addEventListener('mouseenter', () => handleCategoryHover(w.dataset.cat, w.dataset.type));
+      w.addEventListener('mouseleave', () => {
+        if (this.hoveredCategory === w.dataset.cat) {
+          this.hoveredCategory = null;
+          this.renderTwoTierRadialWheel();
+        }
+      });
       w.addEventListener('click', (e) => {
         e.stopPropagation();
         handleCategoryClick(w.dataset.cat, w.dataset.type);
-      });
-    });
-
-    primaryIcons.forEach(i => {
-      i.addEventListener('mouseenter', () => handleCategoryHover(i.dataset.cat, i.dataset.type));
-      i.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleCategoryClick(i.dataset.cat, i.dataset.type);
       });
     });
 
@@ -675,12 +676,14 @@ class FramePlayer {
     this.gtaWheel.style.left = `${posX}px`;
     this.gtaWheel.style.top = `${posY}px`;
     this.activeCategory = null;
+    this.hoveredCategory = null;
     this.renderTwoTierRadialWheel();
     this.gtaWheel.classList.remove('hidden');
   }
 
   hideGtaWheel() {
     this.activeCategory = null;
+    this.hoveredCategory = null;
     this.gtaWheel.classList.add('hidden');
   }
 
