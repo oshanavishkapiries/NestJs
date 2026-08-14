@@ -1,6 +1,6 @@
 /**
- * ExcaliPlayer - GTA V Two-Tier Expanding Radial Selector Wheel
- * Primary Category Wedges with Expanding Outer Sub-Menu Arcs
+ * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px)
+ * Default Unexpanded Mode with Dynamic Hover Outer Arc Sub-Menus
  */
 
 class VideoWidget {
@@ -356,7 +356,7 @@ class FramePlayer {
     this.drawCtx = this.drawCanvas.getContext('2d');
     this.widgetsLayer = document.getElementById('widgetsLayer');
 
-    // GTA V Radial Wheel Elements
+    // GTA V Radial Wheel Elements (300px)
     this.gtaWheel = document.getElementById('gtaRadialWheel');
     this.wheelSvgBg = document.getElementById('wheelSvgBg');
     this.primaryIconsLayer = document.getElementById('wheelPrimaryIcons');
@@ -378,7 +378,7 @@ class FramePlayer {
     this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
-    this.activeCategory = null; // Currently expanded outer sub-menu category ('color' | 'tools' | 'size')
+    this.activeCategory = null; // Default NULL: NO outer arc expanded on open!
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
@@ -420,13 +420,13 @@ class FramePlayer {
     return `M ${x4} ${y4} L ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
   }
 
-  // --- Render Two-Tier Radial Wheel ---
+  // --- Render Compact Two-Tier Radial Wheel (300px ViewBox) ---
   renderTwoTierRadialWheel() {
-    const cx = 220, cy = 220;
-    const rInner = 45;   // Empty Center Hub Hole
-    const rPrimary = 125; // Primary Ring Outer Radius
-    const rOuterIn = 130; // Outer Sub-menu Inner Radius
-    const rOuterOut = 200; // Outer Sub-menu Outer Radius
+    const cx = 150, cy = 150;
+    const rInner = 30;    // Empty Center Hub Hole (60px diameter)
+    const rPrimary = 85;  // Primary Ring Outer Radius
+    const rOuterIn = 88;  // Outer Sub-menu Inner Radius
+    const rOuterOut = 138; // Outer Sub-menu Outer Radius
 
     const categories = [
       {
@@ -434,28 +434,28 @@ class FramePlayer {
         title: 'COLOR',
         startAngle: -90,
         endAngle: -18,
-        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
       },
       {
         id: 'tools',
         title: 'TOOLS',
         startAngle: -18,
         endAngle: 54,
-        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
       },
       {
         id: 'size',
         title: 'SIZE',
         startAngle: 54,
         endAngle: 126,
-        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
       },
       {
         id: 'undo',
         title: 'UNDO',
         startAngle: 126,
         endAngle: 198,
-        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
       },
       {
         id: 'clear',
@@ -463,7 +463,7 @@ class FramePlayer {
         startAngle: 198,
         endAngle: 270,
         isDanger: true,
-        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
       }
     ];
 
@@ -492,7 +492,7 @@ class FramePlayer {
       `;
     });
 
-    // 2. Render Outer Expanded Sub-Menu Arc if activeCategory is selected/hovered
+    // 2. Render Outer Expanded Sub-Menu Arc ONLY when a category is hovered/active!
     if (this.activeCategory === 'color') {
       const startA = -105, endA = -3;
       const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
@@ -520,10 +520,10 @@ class FramePlayer {
       svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
 
       const toolsList = [
-        { id: 'select', name: 'Select', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>' },
-        { id: 'pen', name: 'Pen', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path></svg>' },
-        { id: 'text', name: 'Text', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>' },
-        { id: 'eraser', name: 'Eraser', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>' }
+        { id: 'select', name: 'Select', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>' },
+        { id: 'pen', name: 'Pen', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path></svg>' },
+        { id: 'text', name: 'Text', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>' },
+        { id: 'eraser', name: 'Eraser', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>' }
       ];
 
       const angleStep = (endA - startA) / toolsList.length;
@@ -550,9 +550,9 @@ class FramePlayer {
       svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
 
       const sizesList = [
-        { width: 2, label: 'Thin (2px)' },
-        { width: 4, label: 'Medium (4px)' },
-        { width: 8, label: 'Thick (8px)' }
+        { width: 2, label: 'Thin' },
+        { width: 4, label: 'Med' },
+        { width: 8, label: 'Thick' }
       ];
 
       const angleStep = (endA - startA) / sizesList.length;
@@ -662,18 +662,22 @@ class FramePlayer {
   }
 
   showGtaWheel(x, y) {
-    const wheelSize = 440;
+    const wheelSize = 300;
     const posX = Math.max(wheelSize / 2 + 10, Math.min(window.innerWidth - wheelSize / 2 - 10, x));
     const posY = Math.max(wheelSize / 2 + 10, Math.min(window.innerHeight - wheelSize / 2 - 10, y));
 
     this.gtaWheel.style.left = `${posX}px`;
     this.gtaWheel.style.top = `${posY}px`;
-    this.activeCategory = 'color'; // Default expanded outer sub-menu category
+    
+    // FIX BUG: Default activeCategory is NULL so no outer arc is expanded by default!
+    this.activeCategory = null;
+    
     this.renderTwoTierRadialWheel();
     this.gtaWheel.classList.remove('hidden');
   }
 
   hideGtaWheel() {
+    this.activeCategory = null;
     this.gtaWheel.classList.add('hidden');
   }
 

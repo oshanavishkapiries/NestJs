@@ -1,14 +1,9 @@
 {
-  "activeTopic": "binary_search",
-  "currentFrame": 856,
-  "widgetPos": {
-    "x": 253.59722900390625,
-    "y": 108.35086059570312,
-    "width": 1134.15478515625,
-    "height": 613.8209991455078
-  },
-  "activeTool": "pen",
-  "strokeColor": "#ffffff",
+  "activeTopic": null,
+  "currentFrame": 0,
+  "widgetPos": null,
+  "activeTool": "select",
+  "strokeColor": "#22c55e",
   "strokeWidth": 4,
-  "updatedAt": "2026-08-14T18:42:02.391Z"
+  "updatedAt": "2026-08-14T18:44:33.398Z"
 }
