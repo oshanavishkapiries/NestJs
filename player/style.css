@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & GTA Radial Wheel */
+/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & Ultra-High Quality Video Viewport */
 
 :root {
   --bg-dark: #121212;
@@ -262,6 +262,8 @@ canvas.widget-anim-canvas {
   height: 100%;
   object-fit: contain;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 /* Hover Controllers Bar */

@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * Ultra-Sharp HiDPI (Retina / 4K / High-DPI) Vector Rendering Pipeline
+ * High-Definition Native Source Buffer Rendering Pipeline
  */
 
 class VideoWidget {
@@ -141,13 +141,19 @@ class VideoWidget {
   }
 
   resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
     const rect = this.canvas.getBoundingClientRect();
     const w = rect.width || 640;
     const h = rect.height || 380;
 
-    this.canvas.width = Math.round(w * dpr);
-    this.canvas.height = Math.round(h * dpr);
+    const firstImg = this.frames.find(img => img && img.naturalWidth > 0);
+    const naturalW = firstImg ? firstImg.naturalWidth : 1280;
+    const naturalH = firstImg ? firstImg.naturalHeight : 720;
+
+    // Buffer resolution is at least full native frame size (e.g. 1280x720) or HiDPI display size
+    this.canvas.width = Math.max(Math.round(w * dpr), naturalW);
+    this.canvas.height = Math.max(Math.round(h * dpr), naturalH);
+
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
     this.renderFrame(this.currentFrameIdx);
@@ -957,11 +963,11 @@ class FramePlayer {
   }
 
   resizeCanvases() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    // HiDPI Pixel Buffer Sizing
+    // HiDPI Ultra-High Pixel Buffer Sizing
     this.drawCanvas.width = Math.round(w * dpr);
     this.drawCanvas.height = Math.round(h * dpr);
     this.drawCanvas.style.width = `${w}px`;
@@ -1238,7 +1244,7 @@ class FramePlayer {
   }
 
   redrawDrawingCanvas() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
 
     // Reset Transform & Clear Physical Pixels
     this.drawCtx.save();
