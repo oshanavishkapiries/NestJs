@@ -1,6 +1,6 @@
 /**
- * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px, Fixed Scale)
- * Seamless Hover Identification for all Wedges (including UNDO & CLEAR)
+ * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
+ * GTA V Radial Selector Wheel Engine
  */
 
 class VideoWidget {
@@ -183,8 +183,9 @@ class VideoWidget {
 
     this.header.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      // Account for zoom scale factor
+      const dx = (e.clientX - startX) / this.app.zoom;
+      const dy = (e.clientY - startY) / this.app.zoom;
       this.pos.x = initX + dx;
       this.pos.y = initY + dy;
       this.el.style.left = `${this.pos.x}px`;
@@ -218,8 +219,8 @@ class VideoWidget {
 
       h.addEventListener('pointermove', (e) => {
         if (!isResizing) return;
-        const dx = e.clientX - rStartX;
-        const dy = e.clientY - rStartY;
+        const dx = (e.clientX - rStartX) / this.app.zoom;
+        const dy = (e.clientY - rStartY) / this.app.zoom;
         const handleType = h.dataset.handle;
 
         if (handleType === 'se') {
@@ -362,6 +363,11 @@ class FramePlayer {
     this.primaryIconsLayer = document.getElementById('wheelPrimaryIcons');
     this.submenuContainer = document.getElementById('wheelSubmenuContainer');
 
+    // Excalidraw Zoom Pill Controls
+    this.btnZoomOut = document.getElementById('btnZoomOut');
+    this.btnZoomReset = document.getElementById('btnZoomReset');
+    this.btnZoomIn = document.getElementById('btnZoomIn');
+
     this.toggleAnimBtn = document.getElementById('btnToggleAnimPanel');
     this.arrowIcon = document.getElementById('arrowIcon');
     this.animDrawer = document.getElementById('animDrawer');
@@ -375,14 +381,23 @@ class FramePlayer {
     // State
     this.manifest = null;
     this.activeWidget = null;
-    this.activeTool = 'select';
+    this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
     this.activeCategory = null;
-    this.hoveredCategory = null; // Currently hovered wedge ID
+    this.hoveredCategory = null;
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
+
+    // Excalidraw Infinite Canvas Camera State
+    this.panX = 0;
+    this.panY = 0;
+    this.zoom = 1.0;
+    this.isPanning = false;
+    this.isSpacePressed = false;
+    this.panStartX = 0;
+    this.panStartY = 0;
 
     this.init();
   }
@@ -393,12 +408,98 @@ class FramePlayer {
     this.bindDrawerEvents();
     this.bindGtaRadialWheel();
     this.bindDragAndDrop();
+    this.bindInfiniteCanvasControls();
 
     window.addEventListener('resize', () => this.resizeCanvases());
     this.resizeCanvases();
     
     await this.loadGlobalManifest();
     await this.loadGlobalState();
+  }
+
+  // --- World <-> Screen Coordinate Transformations ---
+  screenToWorld(screenX, screenY) {
+    return {
+      x: (screenX - this.panX) / this.zoom,
+      y: (screenY - this.panY) / this.zoom
+    };
+  }
+
+  worldToScreen(worldX, worldY) {
+    return {
+      x: worldX * this.zoom + this.panX,
+      y: worldY * this.zoom + this.panY
+    };
+  }
+
+  updateCameraTransform() {
+    // 1. Update Video Widgets Container Layer CSS Transform
+    this.widgetsLayer.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoom})`;
+
+    // 2. Update Zoom Pill Button Label
+    const zoomPct = Math.round(this.zoom * 100);
+    this.btnZoomReset.textContent = `${zoomPct}%`;
+
+    // 3. Redraw Drawing Canvas
+    this.redrawDrawingCanvas();
+  }
+
+  // --- Excalidraw Infinite Canvas Controls ---
+  bindInfiniteCanvasControls() {
+    // Zoom Buttons
+    this.btnZoomIn.addEventListener('click', () => {
+      this.setZoomAt(this.zoom * 1.15, window.innerWidth / 2, window.innerHeight / 2);
+    });
+
+    this.btnZoomOut.addEventListener('click', () => {
+      this.setZoomAt(this.zoom / 1.15, window.innerWidth / 2, window.innerHeight / 2);
+    });
+
+    this.btnZoomReset.addEventListener('click', () => {
+      this.panX = 0;
+      this.panY = 0;
+      this.zoom = 1.0;
+      this.updateCameraTransform();
+      this.saveGlobalState();
+    });
+
+    // Mouse Wheel / Trackpad Pinch Zooming
+    window.addEventListener('wheel', (e) => {
+      if (this.gtaWheel && !this.gtaWheel.classList.contains('hidden')) return;
+
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      this.setZoomAt(this.zoom * zoomFactor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    // Spacebar Key Handlers for Instant Pan
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space' && !this.isSpacePressed) {
+        this.isSpacePressed = true;
+        this.workspace.classList.add('is-panning');
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        this.isSpacePressed = false;
+        this.isPanning = false;
+        this.workspace.classList.remove('is-panning', 'is-panning-active');
+      }
+    });
+  }
+
+  setZoomAt(newZoom, screenX, screenY) {
+    const clampedZoom = Math.max(0.15, Math.min(4.0, newZoom));
+    const world = this.screenToWorld(screenX, screenY);
+
+    this.zoom = clampedZoom;
+    this.panX = screenX - world.x * this.zoom;
+    this.panY = screenY - world.y * this.zoom;
+
+    this.updateCameraTransform();
+    this.saveGlobalState();
   }
 
   // --- Polar Arc Path SVG Helper ---
@@ -601,7 +702,7 @@ class FramePlayer {
       this.renderTwoTierRadialWheel();
     };
 
-    const handleCategoryClick = (catId, catType) => {
+    const handleCategoryAction = (catId, catType) => {
       if (catType === 'tool') {
         this.setTool(catId);
         this.hideGtaWheel();
@@ -622,16 +723,20 @@ class FramePlayer {
           this.renderTwoTierRadialWheel();
         }
       });
-      w.addEventListener('click', (e) => {
+
+      // Use pointerdown for 100% instant tool selection without click delay
+      w.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        handleCategoryClick(w.dataset.cat, w.dataset.type);
+        handleCategoryAction(w.dataset.cat, w.dataset.type);
       });
     });
 
     // Sub-Menu Option Event Listeners
     const swatchItems = this.submenuContainer.querySelectorAll('[data-opt-color]');
     swatchItems.forEach(item => {
-      item.addEventListener('click', (e) => {
+      item.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         this.strokeColor = item.dataset.optColor;
         this.saveGlobalState();
@@ -641,7 +746,8 @@ class FramePlayer {
 
     const sizeItems = this.submenuContainer.querySelectorAll('[data-opt-size]');
     sizeItems.forEach(item => {
-      item.addEventListener('click', (e) => {
+      item.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         this.strokeWidth = parseInt(item.dataset.optSize, 10);
         this.saveGlobalState();
@@ -658,7 +764,7 @@ class FramePlayer {
     });
 
     document.addEventListener('pointerdown', (e) => {
-      if (this.gtaWheel && !this.gtaWheel.contains(e.target)) {
+      if (this.gtaWheel && !this.gtaWheel.contains(e.target) && !this.gtaWheel.classList.contains('hidden')) {
         this.hideGtaWheel();
       }
     });
@@ -757,10 +863,11 @@ class FramePlayer {
         if (topicMeta) {
           const dropW = Math.min(640, window.innerWidth * 0.55);
           const dropH = Math.min(380, dropW * (9 / 16));
-          const dropX = Math.max(20, Math.min(window.innerWidth - dropW - 20, e.clientX - dropW / 2));
-          const dropY = Math.max(20, Math.min(window.innerHeight - dropH - 20, e.clientY - dropH / 2));
+          
+          // Drop position converted to World Coordinates
+          const world = this.screenToWorld(e.clientX - dropW / 2, e.clientY - dropH / 2);
 
-          this.spawnVideoWidget(topicMeta, 0, { x: dropX, y: dropY, width: dropW, height: dropH });
+          this.spawnVideoWidget(topicMeta, 0, { x: world.x, y: world.y, width: dropW, height: dropH });
           this.closeDrawer();
         }
       }
@@ -775,6 +882,11 @@ class FramePlayer {
         if (savedState.strokeColor) this.strokeColor = savedState.strokeColor;
         if (savedState.strokeWidth) this.strokeWidth = savedState.strokeWidth;
         if (savedState.activeTool) this.setTool(savedState.activeTool);
+        if (typeof savedState.panX === 'number') this.panX = savedState.panX;
+        if (typeof savedState.panY === 'number') this.panY = savedState.panY;
+        if (typeof savedState.zoom === 'number') this.zoom = savedState.zoom;
+
+        this.updateCameraTransform();
 
         if (savedState.activeTopic && this.manifest.topics.some(t => t.id === savedState.activeTopic)) {
           const topicMeta = this.manifest.topics.find(t => t.id === savedState.activeTopic);
@@ -824,7 +936,7 @@ class FramePlayer {
     const h = window.innerHeight;
     this.drawCanvas.width = w;
     this.drawCanvas.height = h;
-    this.redrawDrawingCanvas();
+    this.updateCameraTransform();
     if (this.activeWidget) {
       this.activeWidget.resizeCanvas();
     }
@@ -842,7 +954,10 @@ class FramePlayer {
           widgetPos: this.activeWidget ? this.activeWidget.pos : null,
           activeTool: this.activeTool,
           strokeColor: this.strokeColor,
-          strokeWidth: this.strokeWidth
+          strokeWidth: this.strokeWidth,
+          panX: this.panX,
+          panY: this.panY,
+          zoom: this.zoom
         })
       });
     } catch (e) {}
@@ -906,13 +1021,13 @@ class FramePlayer {
     });
   }
 
-  // --- Drawing Suite ---
+  // --- Drawing & Panning Suite ---
   bindDrawingEvents() {
     this.drawCanvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     this.drawCanvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
     this.drawCanvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
     this.drawCanvas.addEventListener('pointerleave', () => {
-      if (this.isDrawing) this.onPointerUp();
+      if (this.isDrawing || this.isPanning) this.onPointerUp();
     });
   }
 
@@ -922,22 +1037,22 @@ class FramePlayer {
     this.saveGlobalState();
   }
 
-  getCanvasCoords(e) {
-    const rect = this.drawCanvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (this.drawCanvas.width / rect.width),
-      y: (e.clientY - rect.top) * (this.drawCanvas.height / rect.height)
-    };
-  }
-
   onPointerDown(e) {
-    if (this.activeTool === 'select') return;
+    // 1. Pan Trigger: Spacebar pressed OR Middle mouse button (button === 1) OR Select tool on empty space
+    if (this.isSpacePressed || e.button === 1 || this.activeTool === 'select') {
+      this.isPanning = true;
+      this.panStartX = e.clientX - this.panX;
+      this.panStartY = e.clientY - this.panY;
+      this.workspace.classList.add('is-panning-active');
+      return;
+    }
 
     if (this.activeWidget && this.activeWidget.isPlaying) {
       this.activeWidget.pause();
     }
 
-    const pos = this.getCanvasCoords(e);
+    // Convert Screen Pointer to World Coordinates
+    const world = this.screenToWorld(e.clientX, e.clientY);
 
     if (this.activeTool === 'pen') {
       this.isDrawing = true;
@@ -945,21 +1060,21 @@ class FramePlayer {
         type: 'stroke',
         color: this.strokeColor,
         width: this.strokeWidth,
-        points: [pos]
+        points: [world]
       };
     } else if (this.activeTool === 'text') {
-      this.createInlineTextInput(e.clientX, e.clientY, pos.x, pos.y);
+      this.createInlineTextInput(e.clientX, e.clientY, world.x, world.y);
     } else if (this.activeTool === 'eraser') {
       this.isDrawing = true;
-      this.eraseStrokesNear(pos);
+      this.eraseStrokesNear(world);
     }
   }
 
-  createInlineTextInput(clientX, clientY, canvasX, canvasY) {
+  createInlineTextInput(clientX, clientY, worldX, worldY) {
     const existingInput = document.querySelector('.board-text-input');
     if (existingInput) existingInput.remove();
 
-    const fontSize = this.strokeWidth === 2 ? 18 : (this.strokeWidth === 4 ? 24 : 32);
+    const fontSize = (this.strokeWidth === 2 ? 18 : (this.strokeWidth === 4 ? 24 : 32)) * this.zoom;
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -979,10 +1094,10 @@ class FramePlayer {
         this.boardStrokes.push({
           type: 'text',
           text: val,
-          x: canvasX,
-          y: canvasY,
+          x: worldX,
+          y: worldY,
           color: this.strokeColor,
-          fontSize: fontSize
+          fontSize: this.strokeWidth === 2 ? 18 : (this.strokeWidth === 4 ? 24 : 32)
         });
         this.redrawDrawingCanvas();
         this.saveTopicAnnotations();
@@ -1005,19 +1120,33 @@ class FramePlayer {
   }
 
   onPointerMove(e) {
-    const pos = this.getCanvasCoords(e);
+    if (this.isPanning) {
+      this.panX = e.clientX - this.panStartX;
+      this.panY = e.clientY - this.panStartY;
+      this.updateCameraTransform();
+      return;
+    }
 
     if (!this.isDrawing) return;
 
+    const world = this.screenToWorld(e.clientX, e.clientY);
+
     if (this.activeTool === 'pen') {
-      this.currentStroke.points.push(pos);
+      this.currentStroke.points.push(world);
       this.redrawDrawingCanvas();
     } else if (this.activeTool === 'eraser') {
-      this.eraseStrokesNear(pos);
+      this.eraseStrokesNear(world);
     }
   }
 
   onPointerUp() {
+    if (this.isPanning) {
+      this.isPanning = false;
+      this.workspace.classList.remove('is-panning-active');
+      this.saveGlobalState();
+      return;
+    }
+
     if (!this.isDrawing) return;
     this.isDrawing = false;
 
@@ -1029,17 +1158,17 @@ class FramePlayer {
     this.redrawDrawingCanvas();
   }
 
-  eraseStrokesNear(pos) {
+  eraseStrokesNear(worldPos) {
     if (this.boardStrokes.length === 0) return;
 
-    const eraseRadius = 24;
+    const eraseRadius = 24 / this.zoom;
     const remaining = this.boardStrokes.filter(item => {
       if (item.type === 'text') {
-        const dist = Math.hypot(item.x - pos.x, item.y - pos.y);
+        const dist = Math.hypot(item.x - worldPos.x, item.y - worldPos.y);
         return dist > eraseRadius + (item.fontSize || 20);
       } else if (item.points) {
         return !item.points.some(pt => {
-          const dist = Math.hypot(pt.x - pos.x, pt.y - pos.y);
+          const dist = Math.hypot(pt.x - worldPos.x, pt.y - worldPos.y);
           return dist <= eraseRadius;
         });
       }
@@ -1068,7 +1197,14 @@ class FramePlayer {
   }
 
   redrawDrawingCanvas() {
+    this.drawCtx.save();
+    this.drawCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.drawCtx.clearRect(0, 0, this.drawCanvas.width, this.drawCanvas.height);
+    this.drawCtx.restore();
+
+    // Apply Camera World Transformation
+    this.drawCtx.save();
+    this.drawCtx.setTransform(this.zoom, 0, 0, this.zoom, this.panX, this.panY);
 
     this.boardStrokes.forEach(item => {
       if (item.type === 'text') {
@@ -1081,6 +1217,8 @@ class FramePlayer {
     if (this.currentStroke) {
       this.renderStroke(this.currentStroke);
     }
+
+    this.drawCtx.restore();
   }
 
   renderStroke(stroke) {
