@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & Ultra-High Quality Video Viewport */
+/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & GTA Radial Selector Wheel */
 
 :root {
   --bg-dark: #121212;
@@ -255,6 +255,7 @@ canvas#drawingCanvas.mode-eraser {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 canvas.widget-anim-canvas {
@@ -264,6 +265,31 @@ canvas.widget-anim-canvas {
   display: block;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+}
+
+/* Viewport Play/Pause Click Pulse Flash Overlay */
+.viewport-play-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 15;
+  animation: playFlashAnim 0.35s ease forwards;
+}
+
+@keyframes playFlashAnim {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
 }
 
 /* Hover Controllers Bar */

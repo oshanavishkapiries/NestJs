@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * High-Definition Native Source Buffer Rendering Pipeline
+ * Keyboard Shortcut Suite & Click Viewport Screen to Play/Pause
  */
 
 class VideoWidget {
@@ -50,6 +50,7 @@ class VideoWidget {
 
       <div class="widget-viewport">
         <canvas class="widget-anim-canvas"></canvas>
+        <div class="viewport-play-flash hidden"></div>
       </div>
 
       <div class="widget-controls-bar">
@@ -98,6 +99,8 @@ class VideoWidget {
     this.speedSelect = this.el.querySelector('.widget-speed-select');
     this.btnClose = this.el.querySelector('.widget-btn-close');
     this.header = this.el.querySelector('.widget-header');
+    this.viewport = this.el.querySelector('.widget-viewport');
+    this.flashEl = this.el.querySelector('.viewport-play-flash');
 
     this.app.widgetsLayer.appendChild(this.el);
     this.bindEvents();
@@ -150,7 +153,6 @@ class VideoWidget {
     const naturalW = firstImg ? firstImg.naturalWidth : 1280;
     const naturalH = firstImg ? firstImg.naturalHeight : 720;
 
-    // Buffer resolution is at least full native frame size (e.g. 1280x720) or HiDPI display size
     this.canvas.width = Math.max(Math.round(w * dpr), naturalW);
     this.canvas.height = Math.max(Math.round(h * dpr), naturalH);
 
@@ -159,7 +161,24 @@ class VideoWidget {
     this.renderFrame(this.currentFrameIdx);
   }
 
+  triggerPlayFlash() {
+    if (!this.flashEl) return;
+    this.flashEl.innerHTML = this.isPlaying
+      ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`
+      : `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+    this.flashEl.classList.remove('hidden');
+    setTimeout(() => this.flashEl.classList.add('hidden'), 350);
+  }
+
   bindEvents() {
+    // 1. Click Video Screen Viewport to Play/Pause
+    this.viewport.addEventListener('click', (e) => {
+      if (this.app.activeTool !== 'select') return; // Don't toggle play/pause if user is using drawing tools!
+      e.stopPropagation();
+      this.togglePlayPause();
+      this.triggerPlayFlash();
+    });
+
     this.playBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.togglePlayPause();
@@ -1032,25 +1051,57 @@ class FramePlayer {
     } catch (e) {}
   }
 
+  // --- Comprehensive Keyboard Shortcuts & Player Control Suite ---
   bindEvents() {
     document.addEventListener('keydown', (e) => {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
       if (!this.activeWidget) return;
 
-      switch (e.key) {
+      const k = e.key.toLowerCase();
+
+      switch (k) {
         case ' ':
+        case 'k':
           e.preventDefault();
           this.activeWidget.togglePlayPause();
+          this.activeWidget.triggerPlayFlash();
           break;
-        case 'ArrowLeft':
+        case 'arrowleft':
           e.preventDefault();
           this.activeWidget.currentFrameIdx = Math.max(0, this.activeWidget.currentFrameIdx - 1);
           this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
           this.activeWidget.updateDisplay();
           break;
-        case 'ArrowRight':
+        case 'arrowright':
           e.preventDefault();
           this.activeWidget.currentFrameIdx = Math.min(this.activeWidget.totalFrames - 1, this.activeWidget.currentFrameIdx + 1);
+          this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
+          this.activeWidget.updateDisplay();
+          break;
+        case 'arrowdown':
+        case 'j':
+          e.preventDefault();
+          this.activeWidget.currentFrameIdx = Math.max(0, this.activeWidget.currentFrameIdx - 5);
+          this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
+          this.activeWidget.updateDisplay();
+          break;
+        case 'arrowup':
+        case 'l':
+          e.preventDefault();
+          this.activeWidget.currentFrameIdx = Math.min(this.activeWidget.totalFrames - 1, this.activeWidget.currentFrameIdx + 5);
+          this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
+          this.activeWidget.updateDisplay();
+          break;
+        case 'home':
+        case '0':
+          e.preventDefault();
+          this.activeWidget.currentFrameIdx = 0;
+          this.activeWidget.renderFrame(0);
+          this.activeWidget.updateDisplay();
+          break;
+        case 'end':
+          e.preventDefault();
+          this.activeWidget.currentFrameIdx = Math.max(0, this.activeWidget.totalFrames - 1);
           this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
           this.activeWidget.updateDisplay();
           break;
