@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * GTA V Radial Selector Wheel & Aspect Ratio Locked Resizing
+ * Ultra-Sharp HiDPI (Retina / 4K / High-DPI) Vector Rendering Pipeline
  */
 
 class VideoWidget {
@@ -141,9 +141,15 @@ class VideoWidget {
   }
 
   resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
     const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = rect.width || 640;
-    this.canvas.height = rect.height || 380;
+    const w = rect.width || 640;
+    const h = rect.height || 380;
+
+    this.canvas.width = Math.round(w * dpr);
+    this.canvas.height = Math.round(h * dpr);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
     this.renderFrame(this.currentFrameIdx);
   }
 
@@ -233,7 +239,6 @@ class VideoWidget {
         const dy = (e.clientY - rStartY) / this.app.zoom;
         const handleType = h.dataset.handle;
 
-        // Strict Aspect Ratio Locking (16:9 ratio preservation)
         const aspectRatio = startW / startH;
 
         if (handleType === 'se' || handleType === 'e' || handleType === 's') {
@@ -462,7 +467,7 @@ class FramePlayer {
     const zoomPct = Math.round(this.zoom * 100);
     this.btnZoomReset.textContent = `${zoomPct}%`;
 
-    // 3. Redraw Drawing Canvas
+    // 3. Redraw Drawing Canvas with Ultra-Sharp HiDPI Resolution
     this.redrawDrawingCanvas();
   }
 
@@ -952,10 +957,16 @@ class FramePlayer {
   }
 
   resizeCanvases() {
+    const dpr = window.devicePixelRatio || 1;
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.drawCanvas.width = w;
-    this.drawCanvas.height = h;
+
+    // HiDPI Pixel Buffer Sizing
+    this.drawCanvas.width = Math.round(w * dpr);
+    this.drawCanvas.height = Math.round(h * dpr);
+    this.drawCanvas.style.width = `${w}px`;
+    this.drawCanvas.style.height = `${h}px`;
+
     this.updateCameraTransform();
     if (this.activeWidget) {
       this.activeWidget.resizeCanvas();
@@ -1227,14 +1238,28 @@ class FramePlayer {
   }
 
   redrawDrawingCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+
+    // Reset Transform & Clear Physical Pixels
     this.drawCtx.save();
     this.drawCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.drawCtx.clearRect(0, 0, this.drawCanvas.width, this.drawCanvas.height);
     this.drawCtx.restore();
 
-    // Apply Camera World Transformation
+    // Apply Ultra-Sharp HiDPI + Camera World Transformation
     this.drawCtx.save();
-    this.drawCtx.setTransform(this.zoom, 0, 0, this.zoom, this.panX, this.panY);
+    this.drawCtx.setTransform(
+      this.zoom * dpr, 
+      0, 
+      0, 
+      this.zoom * dpr, 
+      this.panX * dpr, 
+      this.panY * dpr
+    );
+
+    // High Quality Line Anti-Aliasing Configuration
+    this.drawCtx.imageSmoothingEnabled = true;
+    this.drawCtx.imageSmoothingQuality = 'high';
 
     this.boardStrokes.forEach(item => {
       if (item.type === 'text') {
