@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Frame Animation Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <span>Manim Frame Player</span>
+      </div>
+      <div class="topic-selector-wrapper">
+        <label for="topicSelect">Select Topic:</label>
+        <select id="topicSelect" class="topic-select">
+          <option value="">Loading topics...</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="player-main">
+      <div class="viewport-container" id="viewportContainer">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+          <div class="loading-text" id="loadingText">Preloading animation frames (0%)...</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="preloadProgressFill"></div>
+          </div>
+        </div>
+
+        <!-- Canvas Viewport -->
+        <canvas id="animationCanvas"></canvas>
+      </div>
+
+      <!-- Control Bar -->
+      <div class="controls-card">
+        <!-- Timeline Scrubber -->
+        <div class="timeline-container">
+          <input type="range" id="timelineSlider" min="0" max="100" value="0" step="1">
+          <div class="timeline-progress" id="timelineProgress"></div>
+        </div>
+
+        <div class="controls-row">
+          <!-- Playback controls -->
+          <div class="button-group">
+            <button id="btnPrevFrame" class="btn btn-icon" title="Previous Frame (Left Arrow)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+
+            <button id="btnPlayPause" class="btn btn-primary" title="Play/Pause (Spacebar)">
+              <svg id="iconPlay" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <svg id="iconPause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            </button>
+
+            <button id="btnNextFrame" class="btn btn-icon" title="Next Frame (Right Arrow)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+
+            <button id="btnLoop" class="btn btn-toggle active" title="Toggle Loop">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+            </button>
+          </div>
+
+          <!-- Counter & Time Display -->
+          <div class="status-display">
+            <span id="frameCounter" class="mono">Frame: 0 / 0</span>
+            <span class="divider">•</span>
+            <span id="timeCounter" class="mono">00:00.0 / 00:00.0</span>
+          </div>
+
+          <!-- Speed & Fullscreen -->
+          <div class="right-controls">
+            <div class="speed-selector">
+              <label for="speedSelect">Speed:</label>
+              <select id="speedSelect" class="speed-select">
+                <option value="0.5">0.5x</option>
+                <option value="1.0" selected>1.0x (Normal)</option>
+                <option value="1.5">1.5x</option>
+                <option value="2.0">2.0x</option>
+              </select>
+            </div>
+
+            <button id="btnFullscreen" class="btn btn-icon" title="Toggle Fullscreen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Shortcuts Footer -->
+    <footer class="app-footer">
+      <div class="shortcuts-hint">
+        <span><strong>Shortcuts:</strong> <kbd>Space</kbd> Play/Pause | <kbd>←</kbd> <kbd>→</kbd> Step Frame | <kbd>Home</kbd> / <kbd>End</kbd> First/Last Frame | <kbd>F</kbd> Fullscreen</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "knowladgebase",
+  "version": "1.0.0",
+  "description": "Knowledge Base & Universal Frame Animation Player",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "setup": "node .agents/skills/manim_animator/scripts/setup.js",
+    "render": "node .agents/skills/manim_animator/scripts/render.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,11 @@
+# Node dependencies
+node_modules/
+
+# Manim temporary rendering build output
+media/
+.cache/
+__pycache__/
+*.pyc
+
+# Local environments
+.venv/

@@ -1,0 +1,9 @@
+{
+  "topic": "binary_search",
+  "title": "Binary Search Scene",
+  "total_frames": 438,
+  "fps": 15,
+  "frame_prefix": "frames/frame_",
+  "frame_digits": 4,
+  "frame_extension": ".png"
+}
