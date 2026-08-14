@@ -1,4 +1,4 @@
-/* Jupyter Notebook / GTA V Radial Selector Wheel Design System */
+/* Jupyter Notebook / GTA V Expanding Radial Selector Wheel Design System */
 
 :root {
   --bg-dark: #121212;
@@ -289,15 +289,16 @@ canvas.widget-anim-canvas {
 .edge-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nw-resize; }
 
 /* ==========================================================================
-   🎮 GTA V STYLE RADIAL SELECTOR WHEEL
+   🎮 GTA V TWO-TIER EXPANDING RADIAL SELECTOR WHEEL
    ========================================================================== */
 .gta-radial-wheel {
   position: absolute;
-  width: 300px;
-  height: 300px;
+  width: 440px;
+  height: 440px;
   z-index: 200;
   pointer-events: auto;
   user-select: none;
+  transform: translate(-50%, -50%);
   animation: gtaWheelPop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -310,162 +311,189 @@ canvas.widget-anim-canvas {
   display: none !important;
 }
 
-/* SVG Wedges Background */
+/* SVG Wedges Canvas */
 .wheel-svg-bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.85));
+  filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.9));
 }
 
-.wheel-wedge {
-  fill: rgba(22, 22, 24, 0.94);
-  stroke: rgba(255, 255, 255, 0.12);
+/* Primary Category Wedges */
+.primary-wedge {
+  fill: rgba(22, 22, 26, 0.95);
+  stroke: rgba(255, 255, 255, 0.14);
   stroke-width: 1.5px;
   cursor: pointer;
-  transition: fill 0.15s ease, stroke 0.15s ease, transform 0.15s ease;
+  transition: fill 0.15s ease, stroke 0.15s ease;
 }
 
-.wheel-wedge:hover,
-.wheel-wedge.active-wedge {
+.primary-wedge:hover,
+.primary-wedge.active-wedge {
   fill: rgba(2, 132, 199, 0.85);
   stroke: #0284c7;
   filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.6));
 }
 
-.wheel-wedge.danger-wedge:hover,
-.wheel-wedge.danger-wedge.active-wedge {
+.primary-wedge.danger-wedge:hover {
   fill: rgba(239, 68, 68, 0.85);
   stroke: #ef4444;
   filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
 }
 
-/* Center Hub Container */
-.wheel-center-hub {
+/* Expanded Outer Sub-Menu Arc Wedges */
+.outer-arc-bg {
+  fill: rgba(18, 18, 20, 0.96);
+  stroke: rgba(2, 132, 199, 0.6);
+  stroke-width: 1.5px;
+  animation: arcExpand 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.85));
+}
+
+@keyframes arcExpand {
+  from { opacity: 0; transform: scale(0.92); transform-origin: center; }
+  to { opacity: 1; transform: scale(1); transform-origin: center; }
+}
+
+.outer-option-wedge {
+  fill: rgba(30, 30, 34, 0.9);
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1px;
+  cursor: pointer;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.outer-option-wedge:hover,
+.outer-option-wedge.active-option {
+  fill: var(--accent-color);
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 8px var(--accent-color));
+}
+
+/* Center Hub (100% EMPTY Hole Cursor Space) */
+.wheel-empty-center {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 110px;
-  height: 110px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  background: #18181b;
+  background: rgba(14, 14, 16, 0.95);
   border: 2px solid var(--panel-border);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.9);
   z-index: 10;
+  pointer-events: none;
 }
 
-.hub-tool-title {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 0.82rem;
-  letter-spacing: 1px;
-  color: var(--text-bright);
-  text-transform: uppercase;
-}
-
-/* Center Hub Color Ring */
-.hub-color-ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-}
-
-.color-swatch {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.color-swatch:hover { transform: scale(1.25); }
-.color-swatch.active { border-color: #ffffff; transform: scale(1.2); box-shadow: 0 0 6px rgba(255,255,255,0.8); }
-
-/* Center Hub Size Selector */
-.hub-size-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.stroke-btn {
-  background: transparent;
-  border: none;
-  padding: 0 2px;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.stroke-btn:hover { opacity: 0.85; }
-.stroke-btn.active { opacity: 1; transform: scale(1.15); }
-
-.dot-sm { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--text-bright); }
-.dot-md { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--text-bright); }
-.dot-lg { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--text-bright); }
-
-.save-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: #22c55e;
-  opacity: 0.8;
-}
-
-.save-status-pill svg { color: #22c55e; }
-.status-dot { width: 4px; height: 4px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-
-/* Overlay Icons Container on Top of SVG Wedges */
-.wheel-icons-container {
+/* Primary Icons Overlay */
+.wheel-primary-icons {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 15;
 }
 
-.wheel-icon-item {
+.primary-icon-item {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  color: var(--text-muted);
+  color: var(--text-main);
   pointer-events: auto;
   cursor: pointer;
   transition: color 0.15s ease, transform 0.15s ease;
 }
 
-.wheel-icon-item svg {
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+.primary-icon-item.active,
+.primary-icon-item:hover {
+  color: var(--text-bright);
+  transform: translate(-50%, -50%) scale(1.18) !important;
 }
 
-.slice-label {
+.slice-cat-label {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
-.wheel-icon-item.active,
-.wheel-icon-item:hover {
+/* Sub-Menu Outer Arc Options Overlay */
+.wheel-submenu-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.submenu-option-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.submenu-option-item:hover {
+  transform: translate(-50%, -50%) scale(1.25) !important;
+}
+
+/* Color Swatches inside Expanded Outer Arc */
+.submenu-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.submenu-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+/* Size Badges inside Expanded Outer Arc */
+.submenu-size-badge {
+  background: #181818;
   color: var(--text-bright);
-  transform: scale(1.15);
+  border: 1px solid var(--panel-border);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
-.btn-danger-slice:hover {
-  color: #f87171;
+.submenu-size-badge.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Tool Buttons inside Expanded Outer Arc */
+.submenu-tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #181818;
+  color: var(--text-bright);
+  border: 1px solid var(--panel-border);
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.submenu-tool-btn.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 /* Docked Arrow Toggle Button */

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ExcaliPlayer - GTA-Style Selector & Interactive Canvas</title>
+  <title>ExcaliPlayer - GTA-Style Radial Selector Wheel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -27,73 +27,19 @@
       </div>
     </div>
 
-    <!-- 1. GTA V Style Radial Selector Wheel (Right-Click Trigger) -->
+    <!-- 1. GTA V Style Expanding Radial Selector Wheel -->
     <div class="gta-radial-wheel hidden" id="gtaRadialWheel">
-      <!-- SVG Segmented Ring Background -->
-      <svg class="wheel-svg-bg" viewBox="0 0 300 300" id="wheelSvgBg"></svg>
+      <!-- Dynamic SVG Canvas for Primary Ring + Outer Expanded Sub-Menu Arcs -->
+      <svg class="wheel-svg-bg" viewBox="0 0 440 440" id="wheelSvgBg"></svg>
 
-      <!-- Center Hub with Tool Info, Color Ring & Size Selectors -->
-      <div class="wheel-center-hub">
-        <div class="hub-tool-title" id="hubToolTitle">SELECT</div>
-        
-        <!-- Color Palette Ring -->
-        <div class="hub-color-ring" id="colorPalette">
-          <button class="color-swatch active" data-color="#ef4444" style="background:#ef4444;" title="Red"></button>
-          <button class="color-swatch" data-color="#eab308" style="background:#eab308;" title="Yellow"></button>
-          <button class="color-swatch" data-color="#22c55e" style="background:#22c55e;" title="Green"></button>
-          <button class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;" title="Blue"></button>
-          <button class="color-swatch" data-color="#a855f7" style="background:#a855f7;" title="Purple"></button>
-          <button class="color-swatch" data-color="#ffffff" style="background:#ffffff;" title="White"></button>
-          <button class="color-swatch" data-color="#06b6d4" style="background:#06b6d4;" title="Cyan"></button>
-        </div>
+      <!-- Center Hub (100% EMPTY Hole) -->
+      <div class="wheel-empty-center"></div>
 
-        <!-- Size Selectors -->
-        <div class="hub-size-row" id="strokeSizes">
-          <button class="stroke-btn" data-width="2" title="Small Size">
-            <span class="dot-sm"></span>
-          </button>
-          <button class="stroke-btn active" data-width="4" title="Medium Size">
-            <span class="dot-md"></span>
-          </button>
-          <button class="stroke-btn" data-width="8" title="Large Size">
-            <span class="dot-lg"></span>
-          </button>
-        </div>
+      <!-- Primary Categories Icons Layer -->
+      <div class="wheel-primary-icons" id="wheelPrimaryIcons"></div>
 
-        <!-- Sync Icon Status -->
-        <div class="save-status-pill" id="saveStatus" title="Synced to JSON">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 16h5v5"></path></svg>
-          <span class="status-dot"></span>
-        </div>
-      </div>
-
-      <!-- Slices Icons Overlay Container -->
-      <div class="wheel-icons-container" id="wheelIconsContainer">
-        <div class="wheel-icon-item active" data-tool="select" id="toolSelect" title="Select / Move">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>
-          <span class="slice-label">SELECT</span>
-        </div>
-        <div class="wheel-icon-item" data-tool="pen" id="toolPen" title="Pen Tool">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
-          <span class="slice-label">PEN</span>
-        </div>
-        <div class="wheel-icon-item" data-tool="text" id="toolText" title="Text Tool">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>
-          <span class="slice-label">TEXT</span>
-        </div>
-        <div class="wheel-icon-item" data-tool="eraser" id="toolEraser" title="Eraser Tool">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L21 10C21.5 10.5 21.5 11.5 21 12L14 19"></path></svg>
-          <span class="slice-label">ERASER</span>
-        </div>
-        <div class="wheel-icon-item" data-action="undo" id="btnUndo" title="Undo Action">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
-          <span class="slice-label">UNDO</span>
-        </div>
-        <div class="wheel-icon-item btn-danger-slice" data-action="clear" id="btnClearDrawings" title="Clear Board">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          <span class="slice-label">CLEAR</span>
-        </div>
-      </div>
+      <!-- Outer Expanded Sub-Menu Items Overlay -->
+      <div class="wheel-submenu-container" id="wheelSubmenuContainer"></div>
     </div>
 
     <!-- 2. Right-Center Edge Docked Arrow Button -->

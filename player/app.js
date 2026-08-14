@@ -1,6 +1,6 @@
 /**
- * ExcaliPlayer - GTA V Radial Selector Wheel & Interactive Canvas
- * Fast Radial Tool Switcher with Vector Drawings & Text Annotations
+ * ExcaliPlayer - GTA V Two-Tier Expanding Radial Selector Wheel
+ * Primary Category Wedges with Expanding Outer Sub-Menu Arcs
  */
 
 class VideoWidget {
@@ -359,8 +359,8 @@ class FramePlayer {
     // GTA V Radial Wheel Elements
     this.gtaWheel = document.getElementById('gtaRadialWheel');
     this.wheelSvgBg = document.getElementById('wheelSvgBg');
-    this.hubTitle = document.getElementById('hubToolTitle');
-    this.saveStatus = document.getElementById('saveStatus');
+    this.primaryIconsLayer = document.getElementById('wheelPrimaryIcons');
+    this.submenuContainer = document.getElementById('wheelSubmenuContainer');
 
     this.toggleAnimBtn = document.getElementById('btnToggleAnimPanel');
     this.arrowIcon = document.getElementById('arrowIcon');
@@ -372,23 +372,13 @@ class FramePlayer {
     this.loadingText = document.getElementById('loadingText');
     this.progressFill = document.getElementById('preloadProgressFill');
 
-    // Tools & Action Elements inside Radial Wheel
-    this.toolSelectBtn = document.getElementById('toolSelect');
-    this.toolPenBtn = document.getElementById('toolPen');
-    this.toolTextBtn = document.getElementById('toolText');
-    this.toolEraserBtn = document.getElementById('toolEraser');
-    
-    this.btnUndo = document.getElementById('btnUndo');
-    this.btnClearDrawings = document.getElementById('btnClearDrawings');
-    this.colorPalette = document.getElementById('colorPalette');
-    this.strokeSizes = document.getElementById('strokeSizes');
-
     // State
     this.manifest = null;
     this.activeWidget = null;
-    this.activeTool = 'select';
+    this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
+    this.activeCategory = null; // Currently expanded outer sub-menu category ('color' | 'tools' | 'size')
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
@@ -397,7 +387,6 @@ class FramePlayer {
   }
 
   async init() {
-    this.buildGtaRadialWheelSvg();
     this.bindEvents();
     this.bindDrawingEvents();
     this.bindDrawerEvents();
@@ -411,60 +400,250 @@ class FramePlayer {
     await this.loadGlobalState();
   }
 
-  // --- Build GTA V Segmented Polar Wedges SVG ---
-  buildGtaRadialWheelSvg() {
-    const cx = 150, cy = 150, R = 142, r = 58;
-    const slices = [
-      { id: 'select', title: 'SELECT', startAngle: -120, endAngle: -60, isDanger: false },
-      { id: 'pen', title: 'PEN', startAngle: -60, endAngle: 0, isDanger: false },
-      { id: 'text', title: 'TEXT', startAngle: 0, endAngle: 60, isDanger: false },
-      { id: 'eraser', title: 'ERASER', startAngle: 60, endAngle: 120, isDanger: false },
-      { id: 'undo', title: 'UNDO', startAngle: 120, endAngle: 180, isDanger: false },
-      { id: 'clear', title: 'CLEAR', startAngle: 180, endAngle: 240, isDanger: true }
+  // --- Polar Arc Path SVG Helper ---
+  describeArcPath(cx, cy, rInner, rOuter, startAngleDeg, endAngleDeg) {
+    const a1 = (startAngleDeg * Math.PI) / 180;
+    const a2 = (endAngleDeg * Math.PI) / 180;
+
+    const x1 = cx + rOuter * Math.cos(a1);
+    const y1 = cy + rOuter * Math.sin(a1);
+    const x2 = cx + rOuter * Math.cos(a2);
+    const y2 = cy + rOuter * Math.sin(a2);
+
+    const x3 = cx + rInner * Math.cos(a2);
+    const y3 = cy + rInner * Math.sin(a2);
+    const x4 = cx + rInner * Math.cos(a1);
+    const y4 = cy + rInner * Math.sin(a1);
+
+    const largeArc = endAngleDeg - startAngleDeg > 180 ? 1 : 0;
+
+    return `M ${x4} ${y4} L ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+  }
+
+  // --- Render Two-Tier Radial Wheel ---
+  renderTwoTierRadialWheel() {
+    const cx = 220, cy = 220;
+    const rInner = 45;   // Empty Center Hub Hole
+    const rPrimary = 125; // Primary Ring Outer Radius
+    const rOuterIn = 130; // Outer Sub-menu Inner Radius
+    const rOuterOut = 200; // Outer Sub-menu Outer Radius
+
+    const categories = [
+      {
+        id: 'color',
+        title: 'COLOR',
+        startAngle: -90,
+        endAngle: -18,
+        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
+      },
+      {
+        id: 'tools',
+        title: 'TOOLS',
+        startAngle: -18,
+        endAngle: 54,
+        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+      },
+      {
+        id: 'size',
+        title: 'SIZE',
+        startAngle: 54,
+        endAngle: 126,
+        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+      },
+      {
+        id: 'undo',
+        title: 'UNDO',
+        startAngle: 126,
+        endAngle: 198,
+        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
+      },
+      {
+        id: 'clear',
+        title: 'CLEAR',
+        startAngle: 198,
+        endAngle: 270,
+        isDanger: true,
+        iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+      }
     ];
 
     let svgHtml = '';
-    slices.forEach(slice => {
-      const a1 = (slice.startAngle * Math.PI) / 180;
-      const a2 = (slice.endAngle * Math.PI) / 180;
+    let iconsHtml = '';
+    let submenuHtml = '';
 
-      const x1 = cx + R * Math.cos(a1);
-      const y1 = cy + R * Math.sin(a1);
-      const x2 = cx + R * Math.cos(a2);
-      const y2 = cy + R * Math.sin(a2);
+    // 1. Render Primary Categories Ring
+    categories.forEach(cat => {
+      const d = this.describeArcPath(cx, cy, rInner, rPrimary, cat.startAngle, cat.endAngle);
+      const isActive = this.activeCategory === cat.id;
 
-      const x3 = cx + r * Math.cos(a2);
-      const y3 = cy + r * Math.sin(a2);
-      const x4 = cx + r * Math.cos(a1);
-      const y4 = cy + r * Math.sin(a1);
+      svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isActive ? 'active-wedge' : ''}" data-cat="${cat.id}" d="${d}"></path>`;
 
-      const d = `M ${x4} ${y4} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 0 0 ${x4} ${y4} Z`;
-
-      svgHtml += `<path class="wheel-wedge ${slice.isDanger ? 'danger-wedge' : ''} ${this.activeTool === slice.id ? 'active-wedge' : ''}" data-slice="${slice.id}" data-title="${slice.title}" d="${d}"></path>`;
-    });
-
-    this.wheelSvgBg.innerHTML = svgHtml;
-
-    // Position Icons around the wheel at center angles
-    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
-    slices.forEach((slice, idx) => {
-      const midAngleDeg = (slice.startAngle + slice.endAngle) / 2;
-      const midAngleRad = (midAngleDeg * Math.PI) / 180;
-      const midR = (r + R) / 2;
-
+      // Compute center coordinates for Icon
+      const midAngleRad = (((cat.startAngle + cat.endAngle) / 2) * Math.PI) / 180;
+      const midR = (rInner + rPrimary) / 2;
       const iconX = cx + midR * Math.cos(midAngleRad);
       const iconY = cy + midR * Math.sin(midAngleRad);
 
-      const iconEl = iconItems[idx];
-      if (iconEl) {
-        iconEl.style.left = `${iconX}px`;
-        iconEl.style.top = `${iconY}px`;
-        iconEl.style.transform = 'translate(-50%, -50%)';
+      iconsHtml += `
+        <div class="primary-icon-item ${isActive ? 'active' : ''}" data-cat="${cat.id}" style="left:${iconX}px; top:${iconY}px; transform:translate(-50%, -50%);">
+          ${cat.iconSvg}
+          <span class="slice-cat-label">${cat.title}</span>
+        </div>
+      `;
+    });
+
+    // 2. Render Outer Expanded Sub-Menu Arc if activeCategory is selected/hovered
+    if (this.activeCategory === 'color') {
+      const startA = -105, endA = -3;
+      const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
+      svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
+
+      const colors = ['#ef4444', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff', '#06b6d4'];
+      const angleStep = (endA - startA) / colors.length;
+      const rSub = (rOuterIn + rOuterOut) / 2;
+
+      colors.forEach((col, idx) => {
+        const itemAngleRad = ((startA + angleStep * idx + angleStep / 2) * Math.PI) / 180;
+        const itemX = cx + rSub * Math.cos(itemAngleRad);
+        const itemY = cy + rSub * Math.sin(itemAngleRad);
+        const isSel = this.strokeColor === col;
+
+        submenuHtml += `
+          <div class="submenu-option-item" data-opt-color="${col}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
+            <span class="submenu-swatch ${isSel ? 'active' : ''}" style="background:${col};"></span>
+          </div>
+        `;
+      });
+    } else if (this.activeCategory === 'tools') {
+      const startA = -25, endA = 65;
+      const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
+      svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
+
+      const toolsList = [
+        { id: 'select', name: 'Select', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>' },
+        { id: 'pen', name: 'Pen', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path></svg>' },
+        { id: 'text', name: 'Text', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>' },
+        { id: 'eraser', name: 'Eraser', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>' }
+      ];
+
+      const angleStep = (endA - startA) / toolsList.length;
+      const rSub = (rOuterIn + rOuterOut) / 2;
+
+      toolsList.forEach((t, idx) => {
+        const itemAngleRad = ((startA + angleStep * idx + angleStep / 2) * Math.PI) / 180;
+        const itemX = cx + rSub * Math.cos(itemAngleRad);
+        const itemY = cy + rSub * Math.sin(itemAngleRad);
+        const isSel = this.activeTool === t.id;
+
+        submenuHtml += `
+          <div class="submenu-option-item" data-opt-tool="${t.id}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
+            <button class="submenu-tool-btn ${isSel ? 'active' : ''}">
+              ${t.icon}
+              <span>${t.name}</span>
+            </button>
+          </div>
+        `;
+      });
+    } else if (this.activeCategory === 'size') {
+      const startA = 50, endA = 130;
+      const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
+      svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
+
+      const sizesList = [
+        { width: 2, label: 'Thin (2px)' },
+        { width: 4, label: 'Medium (4px)' },
+        { width: 8, label: 'Thick (8px)' }
+      ];
+
+      const angleStep = (endA - startA) / sizesList.length;
+      const rSub = (rOuterIn + rOuterOut) / 2;
+
+      sizesList.forEach((s, idx) => {
+        const itemAngleRad = ((startA + angleStep * idx + angleStep / 2) * Math.PI) / 180;
+        const itemX = cx + rSub * Math.cos(itemAngleRad);
+        const itemY = cy + rSub * Math.sin(itemAngleRad);
+        const isSel = this.strokeWidth === s.width;
+
+        submenuHtml += `
+          <div class="submenu-option-item" data-opt-size="${s.width}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
+            <button class="submenu-size-badge ${isSel ? 'active' : ''}">
+              ${s.label}
+            </button>
+          </div>
+        `;
+      });
+    }
+
+    this.wheelSvgBg.innerHTML = svgHtml;
+    this.primaryIconsLayer.innerHTML = iconsHtml;
+    this.submenuContainer.innerHTML = submenuHtml;
+
+    this.bindWheelInteractions();
+  }
+
+  bindWheelInteractions() {
+    const primaryWedges = this.wheelSvgBg.querySelectorAll('.primary-wedge');
+    const primaryIcons = this.primaryIconsLayer.querySelectorAll('.primary-icon-item');
+
+    const activateCategory = (catId) => {
+      if (catId === 'undo') {
+        this.undoLastStroke();
+        this.hideGtaWheel();
+        return;
       }
+      if (catId === 'clear') {
+        this.clearCurrentFrameDrawings();
+        this.hideGtaWheel();
+        return;
+      }
+      if (this.activeCategory !== catId) {
+        this.activeCategory = catId;
+        this.renderTwoTierRadialWheel();
+      }
+    };
+
+    primaryWedges.forEach(w => {
+      w.addEventListener('mouseenter', () => activateCategory(w.dataset.cat));
+      w.addEventListener('click', () => activateCategory(w.dataset.cat));
+    });
+
+    primaryIcons.forEach(i => {
+      i.addEventListener('mouseenter', () => activateCategory(i.dataset.cat));
+      i.addEventListener('click', () => activateCategory(i.dataset.cat));
+    });
+
+    // Sub-Menu Option Event Listeners
+    const swatchItems = this.submenuContainer.querySelectorAll('[data-opt-color]');
+    swatchItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.strokeColor = item.dataset.optColor;
+        this.saveGlobalState();
+        this.hideGtaWheel();
+      });
+    });
+
+    const toolItems = this.submenuContainer.querySelectorAll('[data-opt-tool]');
+    toolItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.setTool(item.dataset.optTool);
+        this.hideGtaWheel();
+      });
+    });
+
+    const sizeItems = this.submenuContainer.querySelectorAll('[data-opt-size]');
+    sizeItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.strokeWidth = parseInt(item.dataset.optSize, 10);
+        this.saveGlobalState();
+        this.hideGtaWheel();
+      });
     });
   }
 
-  // --- GTA V Radial Wheel Behaviors ---
+  // --- Right-Click Context Menu / GTA Wheel Trigger ---
   bindGtaRadialWheel() {
     window.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -480,89 +659,22 @@ class FramePlayer {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.hideGtaWheel();
     });
-
-    // Hover sync between SVG wedges & Icon overlay items
-    const wedges = this.wheelSvgBg.querySelectorAll('.wheel-wedge');
-    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
-
-    wedges.forEach((w) => {
-      w.addEventListener('mouseenter', () => {
-        const sliceId = w.dataset.slice;
-        const title = w.dataset.title;
-        this.hubTitle.textContent = title;
-
-        wedges.forEach(x => x.classList.remove('active-wedge'));
-        iconItems.forEach(x => x.classList.remove('active'));
-
-        w.classList.add('active-wedge');
-        const matchingIcon = Array.from(iconItems).find(i => (i.dataset.tool || i.dataset.action) === sliceId);
-        if (matchingIcon) matchingIcon.classList.add('active');
-      });
-
-      w.addEventListener('click', () => {
-        const sliceId = w.dataset.slice;
-        this.handleSliceSelect(sliceId);
-      });
-    });
-
-    iconItems.forEach((item) => {
-      item.addEventListener('mouseenter', () => {
-        const sliceId = item.dataset.tool || item.dataset.action;
-        const matchingWedge = Array.from(wedges).find(w => w.dataset.slice === sliceId);
-        if (matchingWedge) {
-          const title = matchingWedge.dataset.title;
-          this.hubTitle.textContent = title;
-
-          wedges.forEach(x => x.classList.remove('active-wedge'));
-          iconItems.forEach(x => x.classList.remove('active'));
-
-          matchingWedge.classList.add('active-wedge');
-          item.classList.add('active');
-        }
-      });
-    });
-  }
-
-  handleSliceSelect(sliceId) {
-    if (['select', 'pen', 'text', 'eraser'].includes(sliceId)) {
-      this.setTool(sliceId);
-    } else if (sliceId === 'undo') {
-      this.undoLastStroke();
-    } else if (sliceId === 'clear') {
-      this.clearCurrentFrameDrawings();
-    }
-    this.hideGtaWheel();
   }
 
   showGtaWheel(x, y) {
-    const wheelSize = 300;
+    const wheelSize = 440;
     const posX = Math.max(wheelSize / 2 + 10, Math.min(window.innerWidth - wheelSize / 2 - 10, x));
     const posY = Math.max(wheelSize / 2 + 10, Math.min(window.innerHeight - wheelSize / 2 - 10, y));
 
     this.gtaWheel.style.left = `${posX}px`;
     this.gtaWheel.style.top = `${posY}px`;
+    this.activeCategory = 'color'; // Default expanded outer sub-menu category
+    this.renderTwoTierRadialWheel();
     this.gtaWheel.classList.remove('hidden');
-
-    this.updateActiveWedgeHighlight();
   }
 
   hideGtaWheel() {
     this.gtaWheel.classList.add('hidden');
-  }
-
-  updateActiveWedgeHighlight() {
-    const wedges = this.wheelSvgBg.querySelectorAll('.wheel-wedge');
-    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
-
-    wedges.forEach(w => {
-      w.classList.toggle('active-wedge', w.dataset.slice === this.activeTool);
-    });
-    iconItems.forEach(i => {
-      const id = i.dataset.tool || i.dataset.action;
-      i.classList.toggle('active', id === this.activeTool);
-    });
-
-    this.hubTitle.textContent = this.activeTool.toUpperCase();
   }
 
   async loadGlobalManifest() {
@@ -650,8 +762,8 @@ class FramePlayer {
       const res = await fetch('/api/state');
       if (res.ok) {
         const savedState = await res.json();
-        if (savedState.strokeColor) this.setActiveColor(savedState.strokeColor);
-        if (savedState.strokeWidth) this.setActiveWidth(savedState.strokeWidth);
+        if (savedState.strokeColor) this.strokeColor = savedState.strokeColor;
+        if (savedState.strokeWidth) this.strokeWidth = savedState.strokeWidth;
         if (savedState.activeTool) this.setTool(savedState.activeTool);
 
         if (savedState.activeTopic && this.manifest.topics.some(t => t.id === savedState.activeTopic)) {
@@ -723,7 +835,6 @@ class FramePlayer {
           strokeWidth: this.strokeWidth
         })
       });
-      this.showSaveFeedback('Synced to JSON');
     } catch (e) {}
   }
 
@@ -756,18 +867,7 @@ class FramePlayer {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ boardStrokes: this.boardStrokes })
       });
-      this.showSaveFeedback('Board Annotations Saved');
     } catch (e) {}
-  }
-
-  showSaveFeedback(msg) {
-    if (this.saveStatus) {
-      this.saveStatus.title = msg;
-      this.saveStatus.style.opacity = '1';
-      setTimeout(() => {
-        this.saveStatus.style.opacity = '0.8';
-      }, 2000);
-    }
   }
 
   bindEvents() {
@@ -796,59 +896,8 @@ class FramePlayer {
     });
   }
 
-  // --- Drawing Suite & Color Swatches inside GTA Hub ---
+  // --- Drawing Suite ---
   bindDrawingEvents() {
-    const tools = [
-      { btn: this.toolSelectBtn, id: 'select' },
-      { btn: this.toolPenBtn, id: 'pen' },
-      { btn: this.toolTextBtn, id: 'text' },
-      { btn: this.toolEraserBtn, id: 'eraser' }
-    ];
-
-    tools.forEach(t => {
-      if (t.btn) {
-        t.btn.addEventListener('click', () => {
-          this.handleSliceSelect(t.id);
-        });
-      }
-    });
-
-    const swatches = this.colorPalette.querySelectorAll('.color-swatch');
-    swatches.forEach(sw => {
-      sw.addEventListener('click', (e) => {
-        e.stopPropagation();
-        swatches.forEach(x => x.classList.remove('active'));
-        sw.classList.add('active');
-        this.strokeColor = sw.dataset.color;
-        this.saveGlobalState();
-      });
-    });
-
-    const strokeBtns = this.strokeSizes.querySelectorAll('.stroke-btn');
-    strokeBtns.forEach(sb => {
-      sb.addEventListener('click', (e) => {
-        e.stopPropagation();
-        strokeBtns.forEach(x => x.classList.remove('active'));
-        sb.classList.add('active');
-        this.strokeWidth = parseInt(sb.dataset.width, 10);
-        this.saveGlobalState();
-      });
-    });
-
-    if (this.btnUndo) {
-      this.btnUndo.addEventListener('click', () => {
-        this.undoLastStroke();
-        this.hideGtaWheel();
-      });
-    }
-    
-    if (this.btnClearDrawings) {
-      this.btnClearDrawings.addEventListener('click', () => {
-        this.clearCurrentFrameDrawings();
-        this.hideGtaWheel();
-      });
-    }
-
     this.drawCanvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     this.drawCanvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
     this.drawCanvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
@@ -857,26 +906,9 @@ class FramePlayer {
     });
   }
 
-  setActiveColor(hex) {
-    this.strokeColor = hex;
-    const swatches = this.colorPalette.querySelectorAll('.color-swatch');
-    swatches.forEach(sw => {
-      sw.classList.toggle('active', sw.dataset.color === hex);
-    });
-  }
-
-  setActiveWidth(width) {
-    this.strokeWidth = width;
-    const strokeBtns = this.strokeSizes.querySelectorAll('.stroke-btn');
-    strokeBtns.forEach(sb => {
-      sb.classList.toggle('active', parseInt(sb.dataset.width, 10) === width);
-    });
-  }
-
   setTool(toolId) {
     this.activeTool = toolId;
     this.drawCanvas.className = `mode-${toolId}`;
-    this.updateActiveWedgeHighlight();
     this.saveGlobalState();
   }
 
