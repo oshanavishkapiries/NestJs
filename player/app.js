@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * Keyboard Shortcut Suite & Click Viewport Screen to Play/Pause
+ * Auto-Hiding Bottom-Left Zoom Pill Component with Smooth Delay Fade-Out
  */
 
 class VideoWidget {
@@ -173,7 +173,7 @@ class VideoWidget {
   bindEvents() {
     // 1. Click Video Screen Viewport to Play/Pause
     this.viewport.addEventListener('click', (e) => {
-      if (this.app.activeTool !== 'select') return; // Don't toggle play/pause if user is using drawing tools!
+      if (this.app.activeTool !== 'select') return;
       e.stopPropagation();
       this.togglePlayPause();
       this.triggerPlayFlash();
@@ -416,9 +416,11 @@ class FramePlayer {
     this.submenuContainer = document.getElementById('wheelSubmenuContainer');
 
     // Excalidraw Zoom Pill Controls
+    this.zoomPill = document.getElementById('infiniteZoomPill');
     this.btnZoomOut = document.getElementById('btnZoomOut');
     this.btnZoomReset = document.getElementById('btnZoomReset');
     this.btnZoomIn = document.getElementById('btnZoomIn');
+    this.zoomPillTimeout = null;
 
     this.toggleAnimBtn = document.getElementById('btnToggleAnimPanel');
     this.arrowIcon = document.getElementById('arrowIcon');
@@ -496,8 +498,34 @@ class FramePlayer {
     this.redrawDrawingCanvas();
   }
 
+  // --- Auto-Hiding Zoom Pill Trigger ---
+  showZoomPill() {
+    if (!this.zoomPill) return;
+    this.zoomPill.classList.add('visible');
+
+    if (this.zoomPillTimeout) {
+      clearTimeout(this.zoomPillTimeout);
+    }
+
+    this.zoomPillTimeout = setTimeout(() => {
+      if (!this.zoomPill.matches(':hover')) {
+        this.zoomPill.classList.remove('visible');
+      }
+    }, 2500);
+  }
+
   // --- Excalidraw Infinite Canvas Controls ---
   bindInfiniteCanvasControls() {
+    // Keep visible on hover & fade out on mouseleave
+    if (this.zoomPill) {
+      this.zoomPill.addEventListener('mouseleave', () => {
+        if (this.zoomPillTimeout) clearTimeout(this.zoomPillTimeout);
+        this.zoomPillTimeout = setTimeout(() => {
+          this.zoomPill.classList.remove('visible');
+        }, 1500);
+      });
+    }
+
     // Zoom Buttons
     this.btnZoomIn.addEventListener('click', () => {
       this.setZoomAt(this.zoom * 1.15, window.innerWidth / 2, window.innerHeight / 2);
@@ -512,6 +540,7 @@ class FramePlayer {
       this.panY = 0;
       this.zoom = 1.0;
       this.updateCameraTransform();
+      this.showZoomPill();
       this.saveGlobalState();
     });
 
@@ -551,6 +580,7 @@ class FramePlayer {
     this.panY = screenY - world.y * this.zoom;
 
     this.updateCameraTransform();
+    this.showZoomPill();
     this.saveGlobalState();
   }
 

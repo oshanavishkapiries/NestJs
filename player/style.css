@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & GTA Radial Selector Wheel */
+/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & Auto-Hiding Zoom Pill */
 
 :root {
   --bg-dark: #121212;
@@ -108,7 +108,7 @@ canvas#drawingCanvas.mode-eraser {
   cursor: cell;
 }
 
-/* Excalidraw-Style Bottom-Left Infinite Zoom & Pan Pill */
+/* Excalidraw-Style Bottom-Left Infinite Zoom & Pan Pill (Auto Fade In/Out on Zooming) */
 .infinite-zoom-pill {
   position: absolute;
   bottom: 20px;
@@ -123,6 +123,17 @@ canvas#drawingCanvas.mode-eraser {
   padding: 3px 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(6px);
+}
+
+.infinite-zoom-pill.visible,
+.infinite-zoom-pill:hover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .zoom-btn {
