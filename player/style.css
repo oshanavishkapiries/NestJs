@@ -61,23 +61,7 @@ html, body {
   cursor: grabbing !important;
 }
 
-/* Layer 1: Full-Screen Interactive Drawing Canvas */
-canvas#drawingCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  pointer-events: auto;
-  cursor: default;
-}
-
-canvas#drawingCanvas.mode-select { cursor: default; }
-canvas#drawingCanvas.mode-pen { cursor: crosshair; }
-canvas#drawingCanvas.mode-text { cursor: text; }
-canvas#drawingCanvas.mode-eraser { cursor: cell; }
-
-/* Layer 2: Video Widgets Layer (Above Canvas, Container Click-through, Widgets Direct Mouse Events) */
+/* Layer 1: Video Widgets Layer (z-index: 20) */
 .widgets-layer {
   position: absolute;
   top: 0;
@@ -87,6 +71,41 @@ canvas#drawingCanvas.mode-eraser { cursor: cell; }
   z-index: 20;
   pointer-events: none;
   transform-origin: 0 0;
+}
+
+/* Layer 2: Interactive Drawing Canvas (Dynamic Z-Index: 10 in Select mode, 30 in Pen/Text/Eraser mode) */
+canvas#drawingCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  cursor: default;
+}
+
+canvas#drawingCanvas.mode-select {
+  z-index: 10;
+  pointer-events: none;
+  cursor: default;
+}
+
+canvas#drawingCanvas.mode-pen {
+  z-index: 30;
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+canvas#drawingCanvas.mode-text {
+  z-index: 30;
+  pointer-events: auto;
+  cursor: text;
+}
+
+canvas#drawingCanvas.mode-eraser {
+  z-index: 30;
+  pointer-events: auto;
+  cursor: cell;
 }
 
 /* Excalidraw-Style Bottom-Left Infinite Zoom & Pan Pill */
@@ -154,7 +173,7 @@ canvas#drawingCanvas.mode-eraser { cursor: cell; }
   outline: none;
   font-family: var(--font-heading);
   padding: 2px 4px;
-  z-index: 30;
+  z-index: 40;
   min-width: 120px;
   line-height: 1.2;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);

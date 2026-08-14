@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * GTA V Radial Selector Wheel & Video Widget Pointer Event Layering
+ * GTA V Radial Selector Wheel & Dynamic Drawing Z-Index Suite
  */
 
 class VideoWidget {
@@ -1043,15 +1043,20 @@ class FramePlayer {
   setTool(toolId) {
     this.activeTool = toolId;
     this.drawCanvas.className = `mode-${toolId}`;
+
+    // Dynamic Z-Index for Drawing ON TOP of Video
+    if (toolId === 'select') {
+      this.drawCanvas.style.zIndex = '10';
+      this.drawCanvas.style.pointerEvents = 'none';
+    } else {
+      this.drawCanvas.style.zIndex = '30';
+      this.drawCanvas.style.pointerEvents = 'auto';
+    }
+
     this.saveGlobalState();
   }
 
   onPointerDown(e) {
-    // If pointerdown is inside a video widget element, ignore canvas drawing/panning!
-    if (e.target && e.target.closest && e.target.closest('.video-widget')) {
-      return;
-    }
-
     // 1. Pan Trigger: Spacebar pressed OR Middle mouse button (button === 1) OR Select tool on empty space
     if (this.isSpacePressed || e.button === 1 || this.activeTool === 'select') {
       this.isPanning = true;

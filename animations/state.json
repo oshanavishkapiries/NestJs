@@ -1,17 +1,17 @@
 {
   "activeTopic": "http_handshake",
-  "currentFrame": 0,
+  "currentFrame": 916,
   "widgetPos": {
     "x": 552.5,
     "y": 256,
     "width": 640,
     "height": 360
   },
-  "activeTool": "select",
+  "activeTool": "pen",
   "strokeColor": "#ffffff",
   "strokeWidth": 4,
   "panX": -31.633514404296875,
   "panY": -36.083099365234375,
   "zoom": 1,
-  "updatedAt": "2026-08-14T18:55:55.471Z"
+  "updatedAt": "2026-08-14T19:02:38.783Z"
 }
