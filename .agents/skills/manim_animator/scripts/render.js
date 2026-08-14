@@ -10,13 +10,14 @@ const FONTS_DIR = path.join(SKILL_DIR, 'assets', 'fonts');
 const args = process.argv.slice(2);
 if (args.length < 2) {
   console.log('Usage: node scripts/render.js <path-to-script.py> <SceneName> [manim-flags]');
-  console.log('Example: node scripts/render.js animations/binary_search/visual.py BinarySearchScene -ql');
+  console.log('Example: node scripts/render.js animations/binary_search/visual.py BinarySearchScene -qm');
   process.exit(1);
 }
 
 const scriptPath = path.resolve(args[0]);
 const sceneName = args[1];
-const extraFlags = args.slice(2).join(' ') || '-ql';
+// Default to -qm (720p resolution, 1280x720)
+const extraFlags = args.slice(2).join(' ') || '-qm';
 
 let mode = 'docker';
 if (fs.existsSync(CONFIG_FILE)) {
@@ -31,9 +32,10 @@ const workspaceDir = process.cwd();
 // Infer topic folder name from script path
 const topicFolder = path.basename(path.dirname(scriptPath));
 console.log(`[Manim Frame Engine] Mode: ${mode}`);
-console.log(`Topic : ${topicFolder}`);
-console.log(`Script: ${scriptPath}`);
-console.log(`Scene : ${sceneName}`);
+console.log(`Topic      : ${topicFolder}`);
+console.log(`Script     : ${scriptPath}`);
+console.log(`Scene      : ${sceneName}`);
+console.log(`Resolution : 720p (-qm / 1280x720)`);
 
 // Ensure PNG frame export mode
 const renderFlags = `${extraFlags} --format=png`;
@@ -82,7 +84,7 @@ const imagesSearchDir = path.join(workspaceDir, 'media', 'images');
 const foundImages = findPngFiles(imagesSearchDir, sceneName).sort();
 
 if (foundImages.length > 0) {
-  console.log(`Organizing ${foundImages.length} frame images into ${targetFramesDir}...`);
+  console.log(`Organizing ${foundImages.length} 720p frame images into ${targetFramesDir}...`);
   foundImages.forEach((imgFile, idx) => {
     const paddedIdx = String(idx).padStart(4, '0');
     const destPath = path.join(targetFramesDir, `frame_${paddedIdx}.png`);
@@ -94,8 +96,9 @@ if (foundImages.length > 0) {
   const topicManifest = {
     topic: topicFolder,
     title: sceneName.replace(/([A-Z])/g, ' $1').trim(),
+    resolution: "720p (1280x720)",
     total_frames: foundImages.length,
-    fps: 15,
+    fps: 30,
     frame_prefix: "frames/frame_",
     frame_digits: 4,
     frame_extension: ".png"
@@ -116,8 +119,9 @@ if (foundImages.length > 0) {
     id: topicFolder,
     title: topicManifest.title,
     folder: topicFolder,
+    resolution: "720p",
     total_frames: foundImages.length,
-    fps: 15
+    fps: 30
   };
 
   if (existingIdx >= 0) {
@@ -127,5 +131,5 @@ if (foundImages.length > 0) {
   }
 
   fs.writeFileSync(globalManifestPath, JSON.stringify(globalManifest, null, 2));
-  console.log(`[Success] Updated frame manifests. Open player/index.html to play!`);
+  console.log(`[Success] Updated 720p frame manifests. Open player/index.html to play!`);
 }

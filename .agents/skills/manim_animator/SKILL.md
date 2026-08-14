@@ -20,7 +20,7 @@ node .agents/skills/manim_animator/scripts/setup.js
 The setup script probes your device capabilities and auto-selects the **optimal rendering engine**:
 - 🚀 **Docker Mode (Recommended)**: Selected automatically if Docker daemon is active. Uses `manimcommunity/manim` container without needing local C/C++ libraries (`ffmpeg`, `cairo`, `pango`, `texlive`).
 - 🐍 **Native Python Mode**: Used if Python `venv` and system libraries are installed locally.
-- 🟢 **Node.js Hybrid Engine**: If Node.js is present, Node scripts (`node scripts/render.js`) can trigger renders across any backend seamlessly.
+- 🟢 **Node.js Hybrid Engine**: If Node.js is present, Node scripts (`node .agents/skills/manim_animator/scripts/render.js`) trigger 720p frame renders across any backend seamlessly.
 
 ---
 
@@ -29,21 +29,21 @@ The setup script probes your device capabilities and auto-selects the **optimal 
 1. **Understand the Target Concept**: Identify key elements to explain (e.g., Sorting Algorithm, Binary Search Tree insertion, Microservice request flow, Mathematical theorem).
 2. **Design the Visual Storyboard**: Map entities to Manim Mobjects (`Text`, `MathTex`, `Square`, `Circle`, `Arrow`, `VGroup`).
 3. **Write the Python Script**: Create a `.py` file inside an appropriate folder (e.g., `animations/<topic>/visual.py`).
-4. **Render the Scene**:
-   - **Using Node Universal Engine**:
+4. **Render the Scene in 720p Resolution**:
+   - **Using Node Universal Engine (Defaults to 720p / `-qm`)**:
      ```bash
-     node .agents/skills/manim_animator/scripts/render.js animations/<topic>/visual.py MainScene -ql
+     node .agents/skills/manim_animator/scripts/render.js animations/<topic>/visual.py MainScene
      ```
-   - **Using Docker Direct**:
+   - **Using Docker Direct (720p Quality)**:
      ```bash
-     docker run --rm -v "$PWD":/manim manimcommunity/manim manim -ql animations/<topic>/visual.py MainScene
+     docker run --rm -v "$PWD":/manim manimcommunity/manim manim -qm animations/<topic>/visual.py MainScene
      ```
-   - **Using Python Venv Direct**:
+   - **Using Python Venv Direct (720p Quality)**:
      ```bash
      source .agents/skills/manim_animator/.venv/bin/activate
-     manim -ql animations/<topic>/visual.py MainScene
+     manim -qm animations/<topic>/visual.py MainScene
      ```
-5. **Present the Result**: Provide the path to the generated MP4/GIF file and explain the visual elements.
+5. **Present the Result**: Provide the path to the generated 720p frame directory and web player at `http://localhost:3000`.
 
 ---
 
@@ -55,7 +55,8 @@ from manim import *
 
 class MathExplanationScene(Scene):
     def construct(self):
-        title = Text("Euler's Identity", font_size=40, color=BLUE)
+        self.camera.background_color = "#0f172a"
+        title = Text("Euler's Identity", font_size=40, color=BLUE, font="Poppins")
         formula = MathTex(r"e^{i\pi} + 1 = 0", font_size=60)
         
         self.play(Write(title))
@@ -77,6 +78,7 @@ from manim import *
 
 class ArraySortingScene(Scene):
     def construct(self):
+        self.camera.background_color = "#0f172a"
         numbers = [4, 2, 7, 1]
         squares = VGroup(*[
             Square(side_length=1.2, fill_opacity=0.2, fill_color=TEAL, stroke_color=WHITE)
@@ -84,7 +86,7 @@ class ArraySortingScene(Scene):
         ]).arrange(RIGHT, buff=0.2)
         
         labels = VGroup(*[
-            Text(str(num), font_size=32).move_to(sq.get_center())
+            Text(str(num), font_size=32, font="Poppins").move_to(sq.get_center())
             for num, sq in zip(numbers, squares)
         ])
         
@@ -93,7 +95,6 @@ class ArraySortingScene(Scene):
         self.play(Create(squares), Write(labels))
         self.wait(1)
         
-        # Highlight swapping elements
         pointer1 = Arrow(start=DOWN*1.5, end=squares[0].get_bottom(), color=RED)
         pointer2 = Arrow(start=DOWN*1.5, end=squares[1].get_bottom(), color=RED)
         
@@ -107,11 +108,12 @@ from manim import *
 
 class SystemFlowScene(Scene):
     def construct(self):
+        self.camera.background_color = "#0f172a"
         client = Rectangle(height=1.5, width=2.0, fill_color=BLUE, fill_opacity=0.3).shift(LEFT * 4)
-        client_text = Text("Client", font_size=24).move_to(client.get_center())
+        client_text = Text("Client", font_size=24, font="Poppins").move_to(client.get_center())
         
         server = Rectangle(height=1.5, width=2.0, fill_color=GREEN, fill_opacity=0.3).shift(RIGHT * 4)
-        server_text = Text("API Server", font_size=24).move_to(server.get_center())
+        server_text = Text("API Server", font_size=24, font="Poppins").move_to(server.get_center())
         
         request_line = Arrow(client.get_right(), server.get_left(), buff=0.1, color=YELLOW)
         packet = Dot(color=ORANGE, radius=0.15).move_to(client.get_right())
@@ -125,7 +127,7 @@ class SystemFlowScene(Scene):
 ---
 
 ### 4. Universal Web Frame Player Architecture
-To bypass video codec and black screen playback issues entirely, animations are exported as high-resolution PNG image frame sequences (`frame_0000.png` ... `frame_XXXX.png`) stored in organized topic folders (`animations/<topic>/frames/`).
+To bypass video codec and black screen playback issues entirely, animations are exported as 720p high-resolution PNG image frame sequences (`frame_0000.png` ... `frame_XXXX.png`) stored in organized topic folders (`animations/<topic>/frames/`).
 
 * **Web Player Application**: Stored at `player/index.html`. It preloads PNG frames into memory and renders them smoothly on an HTML5 `<canvas>` at configurable speeds (0.5x to 2.0x).
 * **Manifest Management**: Rendering via `node .agents/skills/manim_animator/scripts/render.js` automatically organizes output PNG frames into `animations/<topic>/frames/` and updates `animations/manifest.json`.
@@ -133,8 +135,8 @@ To bypass video codec and black screen playback issues entirely, animations are 
 ---
 
 ### 5. Best Practices
+* **Resolution**: Default to 720p (`-qm` flag / `1280x720` resolution at 30 FPS).
 * **Typography**: Always use `font="Poppins"` when creating `Text(...)` elements across all scenes. The TTF font file is stored in the repository at `.agents/skills/manim_animator/assets/fonts/Poppins-Regular.ttf`.
 * **Background Styling**: Set `self.camera.background_color = "#0f172a"` (or solid `BLACK`) in the `construct()` method of scenes.
 * **Pacing**: Use `self.wait(1)` to `self.wait(2)` between major visual shifts so the viewer can process changes.
 * **Colors**: Stick to high-contrast palettes (`BLUE`, `TEAL`, `GREEN`, `YELLOW`, `RED`, `WHITE`).
-* **Clean Transitions**: Fade out old elements using `self.play(FadeOut(group))` or `self.play(ReplacementTransform(A, B))` before moving to the next section.
