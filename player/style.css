@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Compact GTA V Radial Selector Wheel */
+/* Jupyter Notebook / Compact GTA V Radial Selector Wheel (No Zoom Animations) */
 
 :root {
   --bg-dark: #121212;
@@ -221,7 +221,7 @@ canvas.widget-anim-canvas {
 .widget-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
+  width: 100%;
   height: 10px;
   border-radius: var(--radius-sm);
   background: var(--accent-color);
@@ -289,7 +289,7 @@ canvas.widget-anim-canvas {
 .edge-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nw-resize; }
 
 /* ==========================================================================
-   🎮 COMPACT GTA V EXPANDING RADIAL SELECTOR WHEEL (300px)
+   🎮 COMPACT GTA V RADIAL SELECTOR WHEEL (300px, No Zoom Scale Animations)
    ========================================================================== */
 .gta-radial-wheel {
   position: absolute;
@@ -299,12 +299,12 @@ canvas.widget-anim-canvas {
   pointer-events: auto;
   user-select: none;
   transform: translate(-50%, -50%);
-  animation: gtaWheelPop 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+  animation: gtaWheelFadeIn 0.12s ease;
 }
 
-@keyframes gtaWheelPop {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.88); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+@keyframes gtaWheelFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .gta-radial-wheel.hidden {
@@ -320,7 +320,7 @@ canvas.widget-anim-canvas {
   filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.9));
 }
 
-/* Primary Category Wedges */
+/* Primary Category & Direct Tool Wedges */
 .primary-wedge {
   fill: rgba(20, 20, 24, 0.95);
   stroke: rgba(255, 255, 255, 0.15);
@@ -331,15 +331,15 @@ canvas.widget-anim-canvas {
 
 .primary-wedge:hover,
 .primary-wedge.active-wedge {
-  fill: rgba(2, 132, 199, 0.85);
+  fill: rgba(2, 132, 199, 0.88);
   stroke: #0284c7;
-  filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.6));
+  filter: drop-shadow(0 0 6px rgba(2, 132, 199, 0.6));
 }
 
 .primary-wedge.danger-wedge:hover {
-  fill: rgba(239, 68, 68, 0.85);
+  fill: rgba(239, 68, 68, 0.88);
   stroke: #ef4444;
-  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
 }
 
 /* Expanded Outer Sub-Menu Arc Wedges */
@@ -347,13 +347,7 @@ canvas.widget-anim-canvas {
   fill: rgba(16, 16, 20, 0.96);
   stroke: rgba(2, 132, 199, 0.7);
   stroke-width: 1.5px;
-  animation: arcExpand 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.25);
   filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.85));
-}
-
-@keyframes arcExpand {
-  from { opacity: 0; transform: scale(0.94); transform-origin: center; }
-  to { opacity: 1; transform: scale(1); transform-origin: center; }
 }
 
 /* Center Hub (100% EMPTY Hole Cursor Space) */
@@ -372,7 +366,7 @@ canvas.widget-anim-canvas {
   pointer-events: none;
 }
 
-/* Primary Icons Overlay */
+/* Primary Icons Overlay (FIXED SIZE - NO ZOOM SCALE ANIMATION) */
 .wheel-primary-icons {
   position: absolute;
   inset: 0;
@@ -390,25 +384,24 @@ canvas.widget-anim-canvas {
   color: var(--text-main);
   pointer-events: auto;
   cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .primary-icon-item.active,
 .primary-icon-item:hover {
   color: var(--text-bright);
-  transform: translate(-50%, -50%) scale(1.15) !important;
 }
 
 .slice-cat-label {
   font-family: var(--font-heading);
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
-/* Sub-Menu Outer Arc Options Overlay */
+/* Sub-Menu Outer Arc Options Overlay (NO ZOOM SCALE ANIMATION) */
 .wheel-submenu-container {
   position: absolute;
   inset: 0;
@@ -423,11 +416,11 @@ canvas.widget-anim-canvas {
   justify-content: center;
   pointer-events: auto;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .submenu-option-item:hover {
-  transform: translate(-50%, -50%) scale(1.22) !important;
+  opacity: 1;
 }
 
 /* Color Swatches inside Expanded Outer Arc */
@@ -437,9 +430,11 @@ canvas.widget-anim-canvas {
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.15s ease;
 }
 
-.submenu-swatch.active {
+.submenu-swatch.active,
+.submenu-swatch:hover {
   border-color: #ffffff;
   box-shadow: 0 0 8px #ffffff;
 }
@@ -454,29 +449,11 @@ canvas.widget-anim-canvas {
   font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 700;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.submenu-size-badge.active {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-/* Tool Buttons inside Expanded Outer Arc */
-.submenu-tool-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: #181818;
-  color: var(--text-bright);
-  border: 1px solid var(--panel-border);
-  padding: 0.2rem 0.45rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-.submenu-tool-btn.active {
+.submenu-size-badge.active,
+.submenu-size-badge:hover {
   background: var(--accent-color);
   border-color: var(--accent-color);
 }

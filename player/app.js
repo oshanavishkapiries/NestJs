@@ -1,6 +1,6 @@
 /**
- * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px)
- * Fix: Separate Hover vs. Click handlers for UNDO and CLEAR actions
+ * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px, Fixed Scale)
+ * Direct Primary Tools + Outer Expanded Arc Sub-Menus for Colors & Sizes
  */
 
 class VideoWidget {
@@ -375,7 +375,7 @@ class FramePlayer {
     // State
     this.manifest = null;
     this.activeWidget = null;
-    this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
+    this.activeTool = 'select';
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
     this.activeCategory = null;
@@ -420,7 +420,7 @@ class FramePlayer {
     return `M ${x4} ${y4} L ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
   }
 
-  // --- Render Compact Two-Tier Radial Wheel (300px ViewBox) ---
+  // --- Render Compact 8-Wedge Primary Wheel with Direct Tools (300px ViewBox) ---
   renderTwoTierRadialWheel() {
     const cx = 150, cy = 150;
     const rInner = 30;    // Empty Center Hub Hole (60px diameter)
@@ -428,42 +428,72 @@ class FramePlayer {
     const rOuterIn = 88;  // Outer Sub-menu Inner Radius
     const rOuterOut = 138; // Outer Sub-menu Outer Radius
 
+    // 8 Direct Primary Wedges ($45° per slice)
     const categories = [
       {
         id: 'color',
         title: 'COLOR',
         startAngle: -90,
-        endAngle: -18,
-        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
-      },
-      {
-        id: 'tools',
-        title: 'TOOLS',
-        startAngle: -18,
-        endAngle: 54,
-        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+        endAngle: -45,
+        type: 'expand',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
       },
       {
         id: 'size',
         title: 'SIZE',
-        startAngle: 54,
-        endAngle: 126,
-        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+        startAngle: -45,
+        endAngle: 0,
+        type: 'expand',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+      },
+      {
+        id: 'select',
+        title: 'SELECT',
+        startAngle: 0,
+        endAngle: 45,
+        type: 'tool',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>`
+      },
+      {
+        id: 'pen',
+        title: 'PEN',
+        startAngle: 45,
+        endAngle: 90,
+        type: 'tool',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>`
+      },
+      {
+        id: 'text',
+        title: 'TEXT',
+        startAngle: 90,
+        endAngle: 135,
+        type: 'tool',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>`
+      },
+      {
+        id: 'eraser',
+        title: 'ERASER',
+        startAngle: 135,
+        endAngle: 180,
+        type: 'tool',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>`
       },
       {
         id: 'undo',
         title: 'UNDO',
-        startAngle: 126,
-        endAngle: 198,
-        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
+        startAngle: 180,
+        endAngle: 225,
+        type: 'action',
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
       },
       {
         id: 'clear',
         title: 'CLEAR',
-        startAngle: 198,
+        startAngle: 225,
         endAngle: 270,
+        type: 'action',
         isDanger: true,
-        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
       }
     ];
 
@@ -471,12 +501,12 @@ class FramePlayer {
     let iconsHtml = '';
     let submenuHtml = '';
 
-    // 1. Render Primary Categories Ring
+    // 1. Render Primary Ring Wedges
     categories.forEach(cat => {
       const d = this.describeArcPath(cx, cy, rInner, rPrimary, cat.startAngle, cat.endAngle);
-      const isActive = this.activeCategory === cat.id;
+      const isActive = this.activeCategory === cat.id || (cat.type === 'tool' && this.activeTool === cat.id);
 
-      svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isActive ? 'active-wedge' : ''}" data-cat="${cat.id}" d="${d}"></path>`;
+      svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isActive ? 'active-wedge' : ''}" data-cat="${cat.id}" data-type="${cat.type}" d="${d}"></path>`;
 
       const midAngleRad = (((cat.startAngle + cat.endAngle) / 2) * Math.PI) / 180;
       const midR = (rInner + rPrimary) / 2;
@@ -484,16 +514,16 @@ class FramePlayer {
       const iconY = cy + midR * Math.sin(midAngleRad);
 
       iconsHtml += `
-        <div class="primary-icon-item ${isActive ? 'active' : ''}" data-cat="${cat.id}" style="left:${iconX}px; top:${iconY}px; transform:translate(-50%, -50%);">
+        <div class="primary-icon-item ${isActive ? 'active' : ''}" data-cat="${cat.id}" data-type="${cat.type}" style="left:${iconX}px; top:${iconY}px; transform:translate(-50%, -50%);">
           ${cat.iconSvg}
           <span class="slice-cat-label">${cat.title}</span>
         </div>
       `;
     });
 
-    // 2. Render Outer Expanded Sub-Menu Arc ONLY when a category is active!
+    // 2. Render Expanded Outer Sub-Menu Arc for COLOR and SIZE
     if (this.activeCategory === 'color') {
-      const startA = -105, endA = -3;
+      const startA = -110, endA = -25;
       const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
       svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
 
@@ -513,38 +543,8 @@ class FramePlayer {
           </div>
         `;
       });
-    } else if (this.activeCategory === 'tools') {
-      const startA = -25, endA = 65;
-      const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
-      svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
-
-      const toolsList = [
-        { id: 'select', name: 'Select', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>' },
-        { id: 'pen', name: 'Pen', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path></svg>' },
-        { id: 'text', name: 'Text', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>' },
-        { id: 'eraser', name: 'Eraser', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>' }
-      ];
-
-      const angleStep = (endA - startA) / toolsList.length;
-      const rSub = (rOuterIn + rOuterOut) / 2;
-
-      toolsList.forEach((t, idx) => {
-        const itemAngleRad = ((startA + angleStep * idx + angleStep / 2) * Math.PI) / 180;
-        const itemX = cx + rSub * Math.cos(itemAngleRad);
-        const itemY = cy + rSub * Math.sin(itemAngleRad);
-        const isSel = this.activeTool === t.id;
-
-        submenuHtml += `
-          <div class="submenu-option-item" data-opt-tool="${t.id}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
-            <button class="submenu-tool-btn ${isSel ? 'active' : ''}">
-              ${t.icon}
-              <span>${t.name}</span>
-            </button>
-          </div>
-        `;
-      });
     } else if (this.activeCategory === 'size') {
-      const startA = 50, endA = 130;
+      const startA = -60, endA = 15;
       const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
       svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
 
@@ -584,48 +584,46 @@ class FramePlayer {
     const primaryWedges = this.wheelSvgBg.querySelectorAll('.primary-wedge');
     const primaryIcons = this.primaryIconsLayer.querySelectorAll('.primary-icon-item');
 
-    // Separate Hover Handler (Never executes UNDO or CLEAR on hover!)
-    const handleCategoryHover = (catId) => {
-      if (catId === 'undo' || catId === 'clear') {
-        if (this.activeCategory !== null) {
-          this.activeCategory = null;
+    const handleCategoryHover = (catId, catType) => {
+      if (catType === 'expand') {
+        if (this.activeCategory !== catId) {
+          this.activeCategory = catId;
           this.renderTwoTierRadialWheel();
         }
       } else {
-        if (this.activeCategory !== catId) {
-          this.activeCategory = catId;
+        if (this.activeCategory !== null) {
+          this.activeCategory = null;
           this.renderTwoTierRadialWheel();
         }
       }
     };
 
-    // Separate Click Handler (Executes UNDO or CLEAR strictly on click!)
-    const handleCategoryClick = (catId) => {
-      if (catId === 'undo') {
+    const handleCategoryClick = (catId, catType) => {
+      if (catType === 'tool') {
+        this.setTool(catId);
+        this.hideGtaWheel();
+      } else if (catId === 'undo') {
         this.undoLastStroke();
         this.hideGtaWheel();
       } else if (catId === 'clear') {
         this.clearCurrentFrameDrawings();
         this.hideGtaWheel();
-      } else {
-        this.activeCategory = catId;
-        this.renderTwoTierRadialWheel();
       }
     };
 
     primaryWedges.forEach(w => {
-      w.addEventListener('mouseenter', () => handleCategoryHover(w.dataset.cat));
+      w.addEventListener('mouseenter', () => handleCategoryHover(w.dataset.cat, w.dataset.type));
       w.addEventListener('click', (e) => {
         e.stopPropagation();
-        handleCategoryClick(w.dataset.cat);
+        handleCategoryClick(w.dataset.cat, w.dataset.type);
       });
     });
 
     primaryIcons.forEach(i => {
-      i.addEventListener('mouseenter', () => handleCategoryHover(i.dataset.cat));
+      i.addEventListener('mouseenter', () => handleCategoryHover(i.dataset.cat, i.dataset.type));
       i.addEventListener('click', (e) => {
         e.stopPropagation();
-        handleCategoryClick(i.dataset.cat);
+        handleCategoryClick(i.dataset.cat, i.dataset.type);
       });
     });
 
@@ -636,15 +634,6 @@ class FramePlayer {
         e.stopPropagation();
         this.strokeColor = item.dataset.optColor;
         this.saveGlobalState();
-        this.hideGtaWheel();
-      });
-    });
-
-    const toolItems = this.submenuContainer.querySelectorAll('[data-opt-tool]');
-    toolItems.forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.setTool(item.dataset.optTool);
         this.hideGtaWheel();
       });
     });
