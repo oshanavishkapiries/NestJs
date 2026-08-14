@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Compact GTA V Radial Selector Wheel (Seamless Hover Identification) */
+/* Jupyter Notebook / Excalidraw-Style Infinite Canvas & GTA Radial Wheel */
 
 :root {
   --bg-dark: #121212;
@@ -46,20 +46,31 @@ html, body {
   height: 100vh;
   background: var(--board-bg);
   overflow: hidden;
+  touch-action: none;
 }
 
 .board-workspace.drag-over-board {
   box-shadow: inset 0 0 0 3px var(--accent-color);
 }
 
-/* Layer 1: Resizable Video Widgets Container */
+.board-workspace.is-panning {
+  cursor: grab !important;
+}
+
+.board-workspace.is-panning-active {
+  cursor: grabbing !important;
+}
+
+/* Layer 1: Infinite Transform Video Widgets Container */
 .widgets-layer {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
   z-index: 1;
   pointer-events: auto;
+  transform-origin: 0 0;
 }
 
 /* Layer 2: Full-Screen Interactive Drawing Canvas */
@@ -69,12 +80,70 @@ canvas#drawingCanvas {
   width: 100%;
   height: 100%;
   z-index: 10;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: default;
 }
 
-canvas#drawingCanvas.mode-pen { pointer-events: auto; cursor: crosshair; }
-canvas#drawingCanvas.mode-text { pointer-events: auto; cursor: text; }
-canvas#drawingCanvas.mode-eraser { pointer-events: auto; cursor: cell; }
+canvas#drawingCanvas.mode-select { cursor: default; }
+canvas#drawingCanvas.mode-pen { cursor: crosshair; }
+canvas#drawingCanvas.mode-text { cursor: text; }
+canvas#drawingCanvas.mode-eraser { cursor: cell; }
+
+/* Excalidraw-Style Bottom-Left Infinite Zoom & Pan Pill */
+.infinite-zoom-pill {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+  background: rgba(26, 26, 30, 0.92);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.zoom-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-bright);
+}
+
+.zoom-reset-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-bright);
+  padding: 0 6px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.zoom-reset-btn:hover {
+  background: var(--accent-color);
+}
 
 /* Inline Board Text Input Field Overlay */
 .board-text-input {
@@ -367,7 +436,7 @@ canvas.widget-anim-canvas {
   pointer-events: none;
 }
 
-/* Primary Icons Overlay (PASS MOUSE EVENTS DIRECTLY TO SVG WEDGES UNDERNEATH) */
+/* Primary Icons Overlay */
 .wheel-primary-icons {
   position: absolute;
   inset: 0;
@@ -383,7 +452,7 @@ canvas.widget-anim-canvas {
   justify-content: center;
   gap: 1px;
   color: var(--text-main);
-  pointer-events: none; /* Mouse passes directly to SVG path! */
+  pointer-events: none;
   cursor: pointer;
   transition: color 0.15s ease;
 }

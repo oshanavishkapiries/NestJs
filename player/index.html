@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ExcaliPlayer - Compact GTA Radial Wheel</title>
+  <title>ExcaliPlayer - Infinite Canvas with Pan & Zoom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -12,11 +12,11 @@
 <body>
   <!-- Full Screen Board Workspace -->
   <div class="board-workspace" id="boardWorkspace">
-    <!-- Full-Screen Interactive Drawing Canvas -->
-    <canvas id="drawingCanvas"></canvas>
-
-    <!-- Resizable Video Widgets Container Layer -->
+    <!-- Layer 1: Resizable Video Widgets Container Layer (Infinite Pan & Zoom transform) -->
     <div class="widgets-layer" id="widgetsLayer"></div>
+
+    <!-- Layer 2: Full-Screen Interactive Drawing Canvas -->
+    <canvas id="drawingCanvas"></canvas>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay hidden" id="loadingOverlay">
@@ -25,6 +25,13 @@
       <div class="progress-bar-container">
         <div class="progress-bar-fill" id="preloadProgressFill"></div>
       </div>
+    </div>
+
+    <!-- Excalidraw-Style Bottom-Left Infinite Canvas Zoom & Pan Control Pill -->
+    <div class="infinite-zoom-pill" id="infiniteZoomPill">
+      <button id="btnZoomOut" class="zoom-btn" title="Zoom Out (-)">−</button>
+      <button id="btnZoomReset" class="zoom-reset-btn" title="Reset View (100%)">100%</button>
+      <button id="btnZoomIn" class="zoom-btn" title="Zoom In (+)">+</button>
     </div>
 
     <!-- 1. Compact GTA V Style Radial Selector Wheel -->
