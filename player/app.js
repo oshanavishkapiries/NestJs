@@ -1,6 +1,6 @@
 /**
- * ExcaliPlayer - Universal Interactive Animation Suite
- * Refined UI with Border Radius, Sync Icon Badge & Text Annotation Tool
+ * ExcaliPlayer - GTA V Radial Selector Wheel & Interactive Canvas
+ * Fast Radial Tool Switcher with Vector Drawings & Text Annotations
  */
 
 class VideoWidget {
@@ -356,8 +356,10 @@ class FramePlayer {
     this.drawCtx = this.drawCanvas.getContext('2d');
     this.widgetsLayer = document.getElementById('widgetsLayer');
 
-    // Context Menu Panel
-    this.contextMenu = document.getElementById('contextMenuPanel');
+    // GTA V Radial Wheel Elements
+    this.gtaWheel = document.getElementById('gtaRadialWheel');
+    this.wheelSvgBg = document.getElementById('wheelSvgBg');
+    this.hubTitle = document.getElementById('hubToolTitle');
     this.saveStatus = document.getElementById('saveStatus');
 
     this.toggleAnimBtn = document.getElementById('btnToggleAnimPanel');
@@ -370,7 +372,7 @@ class FramePlayer {
     this.loadingText = document.getElementById('loadingText');
     this.progressFill = document.getElementById('preloadProgressFill');
 
-    // Tools Elements
+    // Tools & Action Elements inside Radial Wheel
     this.toolSelectBtn = document.getElementById('toolSelect');
     this.toolPenBtn = document.getElementById('toolPen');
     this.toolTextBtn = document.getElementById('toolText');
@@ -384,23 +386,22 @@ class FramePlayer {
     // State
     this.manifest = null;
     this.activeWidget = null;
-    this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
+    this.activeTool = 'select';
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
     this.isDrawing = false;
     this.currentStroke = null;
-    
-    // Persistent Board Items (Strokes and Text Elements)
     this.boardStrokes = [];
 
     this.init();
   }
 
   async init() {
+    this.buildGtaRadialWheelSvg();
     this.bindEvents();
     this.bindDrawingEvents();
     this.bindDrawerEvents();
-    this.bindContextMenu();
+    this.bindGtaRadialWheel();
     this.bindDragAndDrop();
 
     window.addEventListener('resize', () => this.resizeCanvases());
@@ -408,6 +409,160 @@ class FramePlayer {
     
     await this.loadGlobalManifest();
     await this.loadGlobalState();
+  }
+
+  // --- Build GTA V Segmented Polar Wedges SVG ---
+  buildGtaRadialWheelSvg() {
+    const cx = 150, cy = 150, R = 142, r = 58;
+    const slices = [
+      { id: 'select', title: 'SELECT', startAngle: -120, endAngle: -60, isDanger: false },
+      { id: 'pen', title: 'PEN', startAngle: -60, endAngle: 0, isDanger: false },
+      { id: 'text', title: 'TEXT', startAngle: 0, endAngle: 60, isDanger: false },
+      { id: 'eraser', title: 'ERASER', startAngle: 60, endAngle: 120, isDanger: false },
+      { id: 'undo', title: 'UNDO', startAngle: 120, endAngle: 180, isDanger: false },
+      { id: 'clear', title: 'CLEAR', startAngle: 180, endAngle: 240, isDanger: true }
+    ];
+
+    let svgHtml = '';
+    slices.forEach(slice => {
+      const a1 = (slice.startAngle * Math.PI) / 180;
+      const a2 = (slice.endAngle * Math.PI) / 180;
+
+      const x1 = cx + R * Math.cos(a1);
+      const y1 = cy + R * Math.sin(a1);
+      const x2 = cx + R * Math.cos(a2);
+      const y2 = cy + R * Math.sin(a2);
+
+      const x3 = cx + r * Math.cos(a2);
+      const y3 = cy + r * Math.sin(a2);
+      const x4 = cx + r * Math.cos(a1);
+      const y4 = cy + r * Math.sin(a1);
+
+      const d = `M ${x4} ${y4} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 0 0 ${x4} ${y4} Z`;
+
+      svgHtml += `<path class="wheel-wedge ${slice.isDanger ? 'danger-wedge' : ''} ${this.activeTool === slice.id ? 'active-wedge' : ''}" data-slice="${slice.id}" data-title="${slice.title}" d="${d}"></path>`;
+    });
+
+    this.wheelSvgBg.innerHTML = svgHtml;
+
+    // Position Icons around the wheel at center angles
+    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
+    slices.forEach((slice, idx) => {
+      const midAngleDeg = (slice.startAngle + slice.endAngle) / 2;
+      const midAngleRad = (midAngleDeg * Math.PI) / 180;
+      const midR = (r + R) / 2;
+
+      const iconX = cx + midR * Math.cos(midAngleRad);
+      const iconY = cy + midR * Math.sin(midAngleRad);
+
+      const iconEl = iconItems[idx];
+      if (iconEl) {
+        iconEl.style.left = `${iconX}px`;
+        iconEl.style.top = `${iconY}px`;
+        iconEl.style.transform = 'translate(-50%, -50%)';
+      }
+    });
+  }
+
+  // --- GTA V Radial Wheel Behaviors ---
+  bindGtaRadialWheel() {
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      this.showGtaWheel(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+      if (this.gtaWheel && !this.gtaWheel.contains(e.target)) {
+        this.hideGtaWheel();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.hideGtaWheel();
+    });
+
+    // Hover sync between SVG wedges & Icon overlay items
+    const wedges = this.wheelSvgBg.querySelectorAll('.wheel-wedge');
+    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
+
+    wedges.forEach((w) => {
+      w.addEventListener('mouseenter', () => {
+        const sliceId = w.dataset.slice;
+        const title = w.dataset.title;
+        this.hubTitle.textContent = title;
+
+        wedges.forEach(x => x.classList.remove('active-wedge'));
+        iconItems.forEach(x => x.classList.remove('active'));
+
+        w.classList.add('active-wedge');
+        const matchingIcon = Array.from(iconItems).find(i => (i.dataset.tool || i.dataset.action) === sliceId);
+        if (matchingIcon) matchingIcon.classList.add('active');
+      });
+
+      w.addEventListener('click', () => {
+        const sliceId = w.dataset.slice;
+        this.handleSliceSelect(sliceId);
+      });
+    });
+
+    iconItems.forEach((item) => {
+      item.addEventListener('mouseenter', () => {
+        const sliceId = item.dataset.tool || item.dataset.action;
+        const matchingWedge = Array.from(wedges).find(w => w.dataset.slice === sliceId);
+        if (matchingWedge) {
+          const title = matchingWedge.dataset.title;
+          this.hubTitle.textContent = title;
+
+          wedges.forEach(x => x.classList.remove('active-wedge'));
+          iconItems.forEach(x => x.classList.remove('active'));
+
+          matchingWedge.classList.add('active-wedge');
+          item.classList.add('active');
+        }
+      });
+    });
+  }
+
+  handleSliceSelect(sliceId) {
+    if (['select', 'pen', 'text', 'eraser'].includes(sliceId)) {
+      this.setTool(sliceId);
+    } else if (sliceId === 'undo') {
+      this.undoLastStroke();
+    } else if (sliceId === 'clear') {
+      this.clearCurrentFrameDrawings();
+    }
+    this.hideGtaWheel();
+  }
+
+  showGtaWheel(x, y) {
+    const wheelSize = 300;
+    const posX = Math.max(wheelSize / 2 + 10, Math.min(window.innerWidth - wheelSize / 2 - 10, x));
+    const posY = Math.max(wheelSize / 2 + 10, Math.min(window.innerHeight - wheelSize / 2 - 10, y));
+
+    this.gtaWheel.style.left = `${posX}px`;
+    this.gtaWheel.style.top = `${posY}px`;
+    this.gtaWheel.classList.remove('hidden');
+
+    this.updateActiveWedgeHighlight();
+  }
+
+  hideGtaWheel() {
+    this.gtaWheel.classList.add('hidden');
+  }
+
+  updateActiveWedgeHighlight() {
+    const wedges = this.wheelSvgBg.querySelectorAll('.wheel-wedge');
+    const iconItems = this.gtaWheel.querySelectorAll('.wheel-icon-item');
+
+    wedges.forEach(w => {
+      w.classList.toggle('active-wedge', w.dataset.slice === this.activeTool);
+    });
+    iconItems.forEach(i => {
+      const id = i.dataset.tool || i.dataset.action;
+      i.classList.toggle('active', id === this.activeTool);
+    });
+
+    this.hubTitle.textContent = this.activeTool.toUpperCase();
   }
 
   async loadGlobalManifest() {
@@ -459,38 +614,6 @@ class FramePlayer {
     });
   }
 
-  bindContextMenu() {
-    window.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      this.showContextMenu(e.clientX, e.clientY);
-    });
-
-    document.addEventListener('pointerdown', (e) => {
-      if (this.contextMenu && !this.contextMenu.contains(e.target)) {
-        this.hideContextMenu();
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.hideContextMenu();
-    });
-  }
-
-  showContextMenu(x, y) {
-    const menuW = 290;
-    const menuH = 320;
-    const posX = Math.max(10, Math.min(window.innerWidth - menuW - 10, x));
-    const posY = Math.max(10, Math.min(window.innerHeight - menuH - 10, y));
-
-    this.contextMenu.style.left = `${posX}px`;
-    this.contextMenu.style.top = `${posY}px`;
-    this.contextMenu.classList.remove('hidden');
-  }
-
-  hideContextMenu() {
-    this.contextMenu.classList.add('hidden');
-  }
-
   bindDragAndDrop() {
     this.workspace.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -529,7 +652,7 @@ class FramePlayer {
         const savedState = await res.json();
         if (savedState.strokeColor) this.setActiveColor(savedState.strokeColor);
         if (savedState.strokeWidth) this.setActiveWidth(savedState.strokeWidth);
-        if (savedState.activeTool && savedState.activeTool !== 'laser') this.setTool(savedState.activeTool);
+        if (savedState.activeTool) this.setTool(savedState.activeTool);
 
         if (savedState.activeTopic && this.manifest.topics.some(t => t.id === savedState.activeTopic)) {
           const topicMeta = this.manifest.topics.find(t => t.id === savedState.activeTopic);
@@ -673,7 +796,7 @@ class FramePlayer {
     });
   }
 
-  // --- Drawing Suite ---
+  // --- Drawing Suite & Color Swatches inside GTA Hub ---
   bindDrawingEvents() {
     const tools = [
       { btn: this.toolSelectBtn, id: 'select' },
@@ -683,45 +806,48 @@ class FramePlayer {
     ];
 
     tools.forEach(t => {
-      t.btn.addEventListener('click', () => {
-        tools.forEach(x => x.btn.classList.remove('active'));
-        t.btn.classList.add('active');
-        this.setTool(t.id);
-        this.hideContextMenu();
-      });
+      if (t.btn) {
+        t.btn.addEventListener('click', () => {
+          this.handleSliceSelect(t.id);
+        });
+      }
     });
 
     const swatches = this.colorPalette.querySelectorAll('.color-swatch');
     swatches.forEach(sw => {
-      sw.addEventListener('click', () => {
+      sw.addEventListener('click', (e) => {
+        e.stopPropagation();
         swatches.forEach(x => x.classList.remove('active'));
         sw.classList.add('active');
         this.strokeColor = sw.dataset.color;
         this.saveGlobalState();
-        this.hideContextMenu();
       });
     });
 
     const strokeBtns = this.strokeSizes.querySelectorAll('.stroke-btn');
     strokeBtns.forEach(sb => {
-      sb.addEventListener('click', () => {
+      sb.addEventListener('click', (e) => {
+        e.stopPropagation();
         strokeBtns.forEach(x => x.classList.remove('active'));
         sb.classList.add('active');
         this.strokeWidth = parseInt(sb.dataset.width, 10);
         this.saveGlobalState();
-        this.hideContextMenu();
       });
     });
 
-    this.btnUndo.addEventListener('click', () => {
-      this.undoLastStroke();
-      this.hideContextMenu();
-    });
+    if (this.btnUndo) {
+      this.btnUndo.addEventListener('click', () => {
+        this.undoLastStroke();
+        this.hideGtaWheel();
+      });
+    }
     
-    this.btnClearDrawings.addEventListener('click', () => {
-      this.clearCurrentFrameDrawings();
-      this.hideContextMenu();
-    });
+    if (this.btnClearDrawings) {
+      this.btnClearDrawings.addEventListener('click', () => {
+        this.clearCurrentFrameDrawings();
+        this.hideGtaWheel();
+      });
+    }
 
     this.drawCanvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     this.drawCanvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
@@ -750,14 +876,7 @@ class FramePlayer {
   setTool(toolId) {
     this.activeTool = toolId;
     this.drawCanvas.className = `mode-${toolId}`;
-    
-    const tools = [
-      { btn: this.toolSelectBtn, id: 'select' },
-      { btn: this.toolPenBtn, id: 'pen' },
-      { btn: this.toolTextBtn, id: 'text' },
-      { btn: this.toolEraserBtn, id: 'eraser' }
-    ];
-    tools.forEach(x => x.btn.classList.toggle('active', x.id === toolId));
+    this.updateActiveWedgeHighlight();
     this.saveGlobalState();
   }
 

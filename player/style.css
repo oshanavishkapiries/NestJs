@@ -1,4 +1,4 @@
-/* Jupyter Notebook / Matte Black Refined Design System */
+/* Jupyter Notebook / GTA V Radial Selector Wheel Design System */
 
 :root {
   --bg-dark: #121212;
@@ -9,6 +9,7 @@
   --panel-border-active: #0284c7;
   --accent-color: #0284c7;
   --accent-hover: #0369a1;
+  --accent-yellow: #f59e0b;
   --accent-orange: #f97316;
   --text-main: #cccccc;
   --text-muted: #858585;
@@ -105,7 +106,6 @@ canvas#drawingCanvas.mode-eraser { pointer-events: auto; cursor: cell; }
   z-index: 2;
 }
 
-/* NO Blue Border, NO Blue Outline on Hover/Active */
 .video-widget:hover,
 .video-widget.active-widget {
   border-color: transparent;
@@ -156,7 +156,7 @@ canvas#drawingCanvas.mode-eraser { pointer-events: auto; cursor: cell; }
   background: rgba(239, 68, 68, 0.15);
 }
 
-/* Widget Viewport Canvas - Matte Black Match */
+/* Widget Viewport Canvas */
 .widget-viewport {
   flex: 1;
   position: relative;
@@ -268,12 +268,8 @@ canvas.widget-anim-canvas {
   cursor: pointer;
 }
 
-/* Completely Hidden Visual Corner Boxes */
-.resize-handle {
-  display: none !important;
-}
+.resize-handle { display: none !important; }
 
-/* Invisible Edge & Corner Resize Touch Drag Zones */
 .resize-edge {
   position: absolute;
   opacity: 0;
@@ -281,9 +277,7 @@ canvas.widget-anim-canvas {
   z-index: 14;
 }
 
-.video-widget:hover .resize-edge {
-  pointer-events: auto;
-}
+.video-widget:hover .resize-edge { pointer-events: auto; }
 
 .edge-n { top: -4px; left: 8px; right: 8px; height: 8px; cursor: n-resize; }
 .edge-s { bottom: -4px; left: 8px; right: 8px; height: 8px; cursor: s-resize; }
@@ -294,168 +288,184 @@ canvas.widget-anim-canvas {
 .edge-ne { top: -4px; right: -4px; width: 12px; height: 12px; cursor: ne-resize; }
 .edge-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nw-resize; }
 
-/* --- Right-Click Floating Context Menu Panel --- */
-.context-menu-panel {
+/* ==========================================================================
+   🎮 GTA V STYLE RADIAL SELECTOR WHEEL
+   ========================================================================== */
+.gta-radial-wheel {
   position: absolute;
-  width: 290px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius-lg);
-  padding: 0.85rem;
+  width: 300px;
+  height: 300px;
+  z-index: 200;
+  pointer-events: auto;
+  user-select: none;
+  animation: gtaWheelPop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes gtaWheelPop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.gta-radial-wheel.hidden {
+  display: none !important;
+}
+
+/* SVG Wedges Background */
+.wheel-svg-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.85));
+}
+
+.wheel-wedge {
+  fill: rgba(22, 22, 24, 0.94);
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1.5px;
+  cursor: pointer;
+  transition: fill 0.15s ease, stroke 0.15s ease, transform 0.15s ease;
+}
+
+.wheel-wedge:hover,
+.wheel-wedge.active-wedge {
+  fill: rgba(2, 132, 199, 0.85);
+  stroke: #0284c7;
+  filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.6));
+}
+
+.wheel-wedge.danger-wedge:hover,
+.wheel-wedge.danger-wedge.active-wedge {
+  fill: rgba(239, 68, 68, 0.85);
+  stroke: #ef4444;
+  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
+}
+
+/* Center Hub Container */
+.wheel-center-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #18181b;
+  border: 2px solid var(--panel-border);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  z-index: 100;
-  animation: fadeInFast 0.12s ease;
-}
-
-@keyframes fadeInFast {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.context-header {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+.hub-tool-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
   font-size: 0.82rem;
-  font-weight: 600;
+  letter-spacing: 1px;
   color: var(--text-bright);
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.setting-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.setting-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
   text-transform: uppercase;
 }
 
-.tool-group {
+/* Center Hub Color Ring */
+.hub-color-ring {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.tool-btn {
-  flex: 1;
-  background: #181818;
-  color: var(--text-muted);
-  border: 1px solid var(--panel-border);
-  height: 30px;
-  border-radius: var(--radius-md);
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tool-btn:hover { background: #2d2d2d; color: var(--text-bright); }
-.tool-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
-
-.color-palette {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 3px;
 }
 
 .color-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--panel-border);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
 
-.color-swatch:hover { transform: scale(1.15); }
-.color-swatch.active { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 0 1px var(--accent-color); }
+.color-swatch:hover { transform: scale(1.25); }
+.color-swatch.active { border-color: #ffffff; transform: scale(1.2); box-shadow: 0 0 6px rgba(255,255,255,0.8); }
 
-.stroke-sizes {
+/* Center Hub Size Selector */
+.hub-size-row {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 4px;
 }
 
 .stroke-btn {
-  flex: 1;
-  height: 26px;
-  border-radius: var(--radius-md);
-  background: #181818;
-  border: 1px solid var(--panel-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0 2px;
   cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.stroke-btn.active { background: #2d2d2d; border-color: var(--accent-color); }
+.stroke-btn:hover { opacity: 0.85; }
+.stroke-btn.active { opacity: 1; transform: scale(1.15); }
 
-.dot-sm { width: 4px; height: 4px; border-radius: 50%; background: var(--text-bright); }
-.dot-md { width: 8px; height: 8px; border-radius: 50%; background: var(--text-bright); }
-.dot-lg { width: 12px; height: 12px; border-radius: 50%; background: var(--text-bright); }
+.dot-sm { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--text-bright); }
+.dot-md { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--text-bright); }
+.dot-lg { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--text-bright); }
 
-.actions-row {
-  display: flex;
-  flex-direction: row;
-  gap: 0.35rem;
-}
-
-.btn-action {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.78rem;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  background: #181818;
-  border: 1px solid var(--panel-border);
-  color: var(--text-main);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-action:hover { background: #2d2d2d; }
-.btn-danger { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
-.btn-danger:hover { background: rgba(248, 113, 113, 0.15); }
-
-/* Compact Sync Icon Badge */
 .save-status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.2rem;
   color: #22c55e;
-  background: rgba(34, 197, 94, 0.12);
-  padding: 0.2rem 0.4rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  opacity: 0.8;
+}
+
+.save-status-pill svg { color: #22c55e; }
+.status-dot { width: 4px; height: 4px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+/* Overlay Icons Container on Top of SVG Wedges */
+.wheel-icons-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.wheel-icon-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--text-muted);
+  pointer-events: auto;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
-.save-status-pill svg {
-  color: #22c55e;
+.wheel-icon-item svg {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
 }
 
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
+.slice-label {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.wheel-icon-item.active,
+.wheel-icon-item:hover {
+  color: var(--text-bright);
+  transform: scale(1.15);
+}
+
+.btn-danger-slice:hover {
+  color: #f87171;
 }
 
 /* Docked Arrow Toggle Button */

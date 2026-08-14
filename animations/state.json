@@ -1,14 +1,14 @@
 {
   "activeTopic": "binary_search",
-  "currentFrame": 856,
+  "currentFrame": 493,
   "widgetPos": {
-    "x": 170.80612182617188,
-    "y": 72.44886016845703,
-    "width": 1277.1129150390625,
-    "height": 718.2598876953125
+    "x": 253.59722900390625,
+    "y": 108.35086059570312,
+    "width": 1134.15478515625,
+    "height": 613.8209991455078
   },
   "activeTool": "select",
-  "strokeColor": "#22c55e",
-  "strokeWidth": 8,
-  "updatedAt": "2026-08-14T18:32:03.208Z"
+  "strokeColor": "#ffffff",
+  "strokeWidth": 4,
+  "updatedAt": "2026-08-14T18:36:06.146Z"
 }
