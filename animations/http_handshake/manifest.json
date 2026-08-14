@@ -1,0 +1,10 @@
+{
+  "topic": "http_handshake",
+  "title": "HTTP / HTTPS Handshake Deep Dive",
+  "resolution": "720p (1280x720)",
+  "total_frames": 1268,
+  "fps": 30,
+  "frame_prefix": "frames/frame_",
+  "frame_digits": 4,
+  "frame_extension": ".png"
+}

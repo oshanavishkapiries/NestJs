@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * GTA V Radial Selector Wheel Engine
+ * GTA V Radial Selector Wheel & Video Widget Pointer Event Layering
  */
 
 class VideoWidget {
@@ -148,23 +148,30 @@ class VideoWidget {
   }
 
   bindEvents() {
-    this.playBtn.addEventListener('click', () => this.togglePlayPause());
+    this.playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.togglePlayPause();
+    });
 
     this.speedSelect.addEventListener('change', (e) => {
+      e.stopPropagation();
       this.speed = parseFloat(e.target.value);
     });
 
     this.slider.addEventListener('input', (e) => {
+      e.stopPropagation();
       this.currentFrameIdx = parseInt(e.target.value, 10);
       this.renderFrame(this.currentFrameIdx);
       this.updateDisplay();
     });
 
-    this.slider.addEventListener('change', () => {
+    this.slider.addEventListener('change', (e) => {
+      e.stopPropagation();
       this.app.saveGlobalState();
     });
 
-    this.btnClose.addEventListener('click', () => {
+    this.btnClose.addEventListener('click', (e) => {
+      e.stopPropagation();
       this.destroy();
     });
 
@@ -173,6 +180,7 @@ class VideoWidget {
 
     this.header.addEventListener('pointerdown', (e) => {
       if (e.target === this.btnClose) return;
+      e.stopPropagation();
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
@@ -183,7 +191,7 @@ class VideoWidget {
 
     this.header.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      // Account for zoom scale factor
+      e.stopPropagation();
       const dx = (e.clientX - startX) / this.app.zoom;
       const dy = (e.clientY - startY) / this.app.zoom;
       this.pos.x = initX + dx;
@@ -194,6 +202,7 @@ class VideoWidget {
 
     this.header.addEventListener('pointerup', (e) => {
       if (isDragging) {
+        e.stopPropagation();
         isDragging = false;
         this.header.releasePointerCapture(e.pointerId);
         this.app.saveGlobalState();
@@ -219,6 +228,7 @@ class VideoWidget {
 
       h.addEventListener('pointermove', (e) => {
         if (!isResizing) return;
+        e.stopPropagation();
         const dx = (e.clientX - rStartX) / this.app.zoom;
         const dy = (e.clientY - rStartY) / this.app.zoom;
         const handleType = h.dataset.handle;
@@ -266,6 +276,7 @@ class VideoWidget {
 
       h.addEventListener('pointerup', (e) => {
         if (isResizing) {
+          e.stopPropagation();
           isResizing = false;
           h.releasePointerCapture(e.pointerId);
           this.app.saveGlobalState();
@@ -724,7 +735,6 @@ class FramePlayer {
         }
       });
 
-      // Use pointerdown for 100% instant tool selection without click delay
       w.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -864,7 +874,6 @@ class FramePlayer {
           const dropW = Math.min(640, window.innerWidth * 0.55);
           const dropH = Math.min(380, dropW * (9 / 16));
           
-          // Drop position converted to World Coordinates
           const world = this.screenToWorld(e.clientX - dropW / 2, e.clientY - dropH / 2);
 
           this.spawnVideoWidget(topicMeta, 0, { x: world.x, y: world.y, width: dropW, height: dropH });
@@ -1038,6 +1047,11 @@ class FramePlayer {
   }
 
   onPointerDown(e) {
+    // If pointerdown is inside a video widget element, ignore canvas drawing/panning!
+    if (e.target && e.target.closest && e.target.closest('.video-widget')) {
+      return;
+    }
+
     // 1. Pan Trigger: Spacebar pressed OR Middle mouse button (button === 1) OR Select tool on empty space
     if (this.isSpacePressed || e.button === 1 || this.activeTool === 'select') {
       this.isPanning = true;
@@ -1139,7 +1153,7 @@ class FramePlayer {
     }
   }
 
-  onPointerUp() {
+  onPointerUp(e) {
     if (this.isPanning) {
       this.isPanning = false;
       this.workspace.classList.remove('is-panning-active');

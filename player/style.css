@@ -61,19 +61,7 @@ html, body {
   cursor: grabbing !important;
 }
 
-/* Layer 1: Infinite Transform Video Widgets Container */
-.widgets-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-  z-index: 1;
-  pointer-events: auto;
-  transform-origin: 0 0;
-}
-
-/* Layer 2: Full-Screen Interactive Drawing Canvas */
+/* Layer 1: Full-Screen Interactive Drawing Canvas */
 canvas#drawingCanvas {
   position: absolute;
   inset: 0;
@@ -88,6 +76,18 @@ canvas#drawingCanvas.mode-select { cursor: default; }
 canvas#drawingCanvas.mode-pen { cursor: crosshair; }
 canvas#drawingCanvas.mode-text { cursor: text; }
 canvas#drawingCanvas.mode-eraser { cursor: cell; }
+
+/* Layer 2: Video Widgets Layer (Above Canvas, Container Click-through, Widgets Direct Mouse Events) */
+.widgets-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: 20;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
 
 /* Excalidraw-Style Bottom-Left Infinite Zoom & Pan Pill */
 .infinite-zoom-pill {
@@ -154,7 +154,7 @@ canvas#drawingCanvas.mode-eraser { cursor: cell; }
   outline: none;
   font-family: var(--font-heading);
   padding: 2px 4px;
-  z-index: 20;
+  z-index: 30;
   min-width: 120px;
   line-height: 1.2;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -173,6 +173,7 @@ canvas#drawingCanvas.mode-eraser { cursor: cell; }
   min-width: 240px;
   min-height: 140px;
   z-index: 2;
+  pointer-events: auto;
 }
 
 .video-widget:hover,

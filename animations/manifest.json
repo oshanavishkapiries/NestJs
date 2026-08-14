@@ -1,0 +1,12 @@
+{
+  "topics": [
+    {
+      "id": "http_handshake",
+      "title": "HTTP / HTTPS Handshake Deep Dive",
+      "folder": "http_handshake",
+      "resolution": "720p",
+      "total_frames": 1268,
+      "fps": 30
+    }
+  ]
+}
