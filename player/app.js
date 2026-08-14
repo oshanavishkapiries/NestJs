@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Compact GTA V Radial Selector Wheel (300px)
- * Default Unexpanded Mode with Dynamic Hover Outer Arc Sub-Menus
+ * Fix: Separate Hover vs. Click handlers for UNDO and CLEAR actions
  */
 
 class VideoWidget {
@@ -378,7 +378,7 @@ class FramePlayer {
     this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
     this.strokeColor = '#ef4444';
     this.strokeWidth = 4;
-    this.activeCategory = null; // Default NULL: NO outer arc expanded on open!
+    this.activeCategory = null;
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
@@ -478,7 +478,6 @@ class FramePlayer {
 
       svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isActive ? 'active-wedge' : ''}" data-cat="${cat.id}" d="${d}"></path>`;
 
-      // Compute center coordinates for Icon
       const midAngleRad = (((cat.startAngle + cat.endAngle) / 2) * Math.PI) / 180;
       const midR = (rInner + rPrimary) / 2;
       const iconX = cx + midR * Math.cos(midAngleRad);
@@ -492,7 +491,7 @@ class FramePlayer {
       `;
     });
 
-    // 2. Render Outer Expanded Sub-Menu Arc ONLY when a category is hovered/active!
+    // 2. Render Outer Expanded Sub-Menu Arc ONLY when a category is active!
     if (this.activeCategory === 'color') {
       const startA = -105, endA = -3;
       const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
@@ -585,31 +584,49 @@ class FramePlayer {
     const primaryWedges = this.wheelSvgBg.querySelectorAll('.primary-wedge');
     const primaryIcons = this.primaryIconsLayer.querySelectorAll('.primary-icon-item');
 
-    const activateCategory = (catId) => {
+    // Separate Hover Handler (Never executes UNDO or CLEAR on hover!)
+    const handleCategoryHover = (catId) => {
+      if (catId === 'undo' || catId === 'clear') {
+        if (this.activeCategory !== null) {
+          this.activeCategory = null;
+          this.renderTwoTierRadialWheel();
+        }
+      } else {
+        if (this.activeCategory !== catId) {
+          this.activeCategory = catId;
+          this.renderTwoTierRadialWheel();
+        }
+      }
+    };
+
+    // Separate Click Handler (Executes UNDO or CLEAR strictly on click!)
+    const handleCategoryClick = (catId) => {
       if (catId === 'undo') {
         this.undoLastStroke();
         this.hideGtaWheel();
-        return;
-      }
-      if (catId === 'clear') {
+      } else if (catId === 'clear') {
         this.clearCurrentFrameDrawings();
         this.hideGtaWheel();
-        return;
-      }
-      if (this.activeCategory !== catId) {
+      } else {
         this.activeCategory = catId;
         this.renderTwoTierRadialWheel();
       }
     };
 
     primaryWedges.forEach(w => {
-      w.addEventListener('mouseenter', () => activateCategory(w.dataset.cat));
-      w.addEventListener('click', () => activateCategory(w.dataset.cat));
+      w.addEventListener('mouseenter', () => handleCategoryHover(w.dataset.cat));
+      w.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleCategoryClick(w.dataset.cat);
+      });
     });
 
     primaryIcons.forEach(i => {
-      i.addEventListener('mouseenter', () => activateCategory(i.dataset.cat));
-      i.addEventListener('click', () => activateCategory(i.dataset.cat));
+      i.addEventListener('mouseenter', () => handleCategoryHover(i.dataset.cat));
+      i.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleCategoryClick(i.dataset.cat);
+      });
     });
 
     // Sub-Menu Option Event Listeners
@@ -668,10 +685,7 @@ class FramePlayer {
 
     this.gtaWheel.style.left = `${posX}px`;
     this.gtaWheel.style.top = `${posY}px`;
-    
-    // FIX BUG: Default activeCategory is NULL so no outer arc is expanded by default!
     this.activeCategory = null;
-    
     this.renderTwoTierRadialWheel();
     this.gtaWheel.classList.remove('hidden');
   }
