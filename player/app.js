@@ -1,6 +1,6 @@
 /**
  * ExcaliPlayer - Excalidraw-Style Infinite Canvas with Pan & Zoom
- * GTA V Radial Selector Wheel & Dynamic Drawing Z-Index Suite
+ * GTA V Radial Selector Wheel & Aspect Ratio Locked Resizing
  */
 
 class VideoWidget {
@@ -233,37 +233,48 @@ class VideoWidget {
         const dy = (e.clientY - rStartY) / this.app.zoom;
         const handleType = h.dataset.handle;
 
-        if (handleType === 'se') {
-          this.pos.width = Math.max(240, startW + dx);
-          this.pos.height = Math.max(140, startH + dy);
-        } else if (handleType === 'sw') {
-          const newW = Math.max(240, startW - dx);
+        // Strict Aspect Ratio Locking (16:9 ratio preservation)
+        const aspectRatio = startW / startH;
+
+        if (handleType === 'se' || handleType === 'e' || handleType === 's') {
+          let newW = Math.max(240, startW + dx);
+          let newH = newW / aspectRatio;
+          if (newH < 135) {
+            newH = 135;
+            newW = newH * aspectRatio;
+          }
+          this.pos.width = newW;
+          this.pos.height = newH;
+        } else if (handleType === 'sw' || handleType === 'w') {
+          let newW = Math.max(240, startW - dx);
+          let newH = newW / aspectRatio;
+          if (newH < 135) {
+            newH = 135;
+            newW = newH * aspectRatio;
+          }
           this.pos.x = startXPos + (startW - newW);
           this.pos.width = newW;
-          this.pos.height = Math.max(140, startH + dy);
+          this.pos.height = newH;
         } else if (handleType === 'ne') {
-          const newH = Math.max(140, startH - dy);
-          this.pos.y = startYPos + (startH - newH);
-          this.pos.height = newH;
-          this.pos.width = Math.max(240, startW + dx);
-        } else if (handleType === 'nw') {
-          const newW = Math.max(240, startW - dx);
-          const newH = Math.max(140, startH - dy);
-          this.pos.x = startXPos + (startW - newW);
+          let newW = Math.max(240, startW + dx);
+          let newH = newW / aspectRatio;
+          if (newH < 135) {
+            newH = 135;
+            newW = newH * aspectRatio;
+          }
           this.pos.y = startYPos + (startH - newH);
           this.pos.width = newW;
           this.pos.height = newH;
-        } else if (handleType === 'e') {
-          this.pos.width = Math.max(240, startW + dx);
-        } else if (handleType === 'w') {
-          const newW = Math.max(240, startW - dx);
+        } else if (handleType === 'nw' || handleType === 'n') {
+          let newW = Math.max(240, startW - dx);
+          let newH = newW / aspectRatio;
+          if (newH < 135) {
+            newH = 135;
+            newW = newH * aspectRatio;
+          }
           this.pos.x = startXPos + (startW - newW);
-          this.pos.width = newW;
-        } else if (handleType === 's') {
-          this.pos.height = Math.max(140, startH + dy);
-        } else if (handleType === 'n') {
-          const newH = Math.max(140, startH - dy);
           this.pos.y = startYPos + (startH - newH);
+          this.pos.width = newW;
           this.pos.height = newH;
         }
 

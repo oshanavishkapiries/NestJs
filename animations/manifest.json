@@ -7,6 +7,14 @@
       "resolution": "720p",
       "total_frames": 1268,
       "fps": 30
+    },
+    {
+      "id": "blockchain_structure",
+      "title": "Blockchain Architecture: Tx ➔ Block ➔ Blockchain",
+      "folder": "blockchain_structure",
+      "resolution": "720p",
+      "total_frames": 1115,
+      "fps": 30
     }
   ]
 }

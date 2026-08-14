@@ -1,17 +1,17 @@
 {
-  "activeTopic": "http_handshake",
-  "currentFrame": 916,
+  "activeTopic": "blockchain_structure",
+  "currentFrame": 399,
   "widgetPos": {
-    "x": 552.5,
-    "y": 256,
-    "width": 640,
-    "height": 360
+    "x": 366.36008644104004,
+    "y": 95.75142097473145,
+    "width": 1212.1129970550537,
+    "height": 748.0432796478271
   },
-  "activeTool": "pen",
+  "activeTool": "select",
   "strokeColor": "#ffffff",
   "strokeWidth": 4,
   "panX": -31.633514404296875,
   "panY": -36.083099365234375,
   "zoom": 1,
-  "updatedAt": "2026-08-14T19:02:38.783Z"
+  "updatedAt": "2026-08-14T19:05:34.466Z"
 }
