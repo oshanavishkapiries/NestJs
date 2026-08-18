@@ -1,8 +1,10 @@
 {
-  "mode": "docker",
-  "has_docker": true,
-  "has_node": true,
-  "has_python3": true,
-  "has_ffmpeg": false,
-  "timestamp": "2026-08-14T18:54:08.823Z"
+  "mode": "venv",
+  "environment": {
+    "python3": true,
+    "node": true,
+    "docker": true,
+    "ffmpeg": true,
+    "apt": true
+  }
 }

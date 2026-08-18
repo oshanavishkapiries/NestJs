@@ -19,11 +19,11 @@ const sceneName = args[1];
 // Default to -qm (720p resolution, 1280x720)
 const extraFlags = args.slice(2).join(' ') || '-qm';
 
-let mode = 'docker';
+let mode = 'venv';
 if (fs.existsSync(CONFIG_FILE)) {
   try {
     const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    mode = config.mode || 'docker';
+    mode = config.mode || 'venv';
   } catch (e) {}
 }
 
@@ -40,23 +40,11 @@ console.log(`Resolution : 720p (-qm / 1280x720)`);
 // Ensure PNG frame export mode
 const renderFlags = `${extraFlags} --format=png`;
 
-if (mode === 'docker') {
-  let fontMount = '';
-  if (fs.existsSync(FONTS_DIR)) {
-    fontMount = `-v "${FONTS_DIR}":/usr/share/fonts/poppins`;
-  }
-  
-  const relScriptPath = scriptPath.replace(workspaceDir + '/', '');
-  const dockerCmd = `docker run --rm -v "${workspaceDir}":/manim ${fontMount} manimcommunity/manim manim ${renderFlags} "${relScriptPath}" "${sceneName}"`;
-  console.log(`Executing: ${dockerCmd}`);
-  execSync(dockerCmd, { stdio: 'inherit' });
-} else {
-  const venvManim = path.join(SKILL_DIR, '.venv', 'bin', 'manim');
-  const manimCmd = fs.existsSync(venvManim) ? venvManim : 'manim';
-  const fullCmd = `${manimCmd} ${renderFlags} "${scriptPath}" "${sceneName}"`;
-  console.log(`Executing: ${fullCmd}`);
-  execSync(fullCmd, { stdio: 'inherit' });
-}
+const venvManim = path.join(SKILL_DIR, '.venv', 'bin', 'manim');
+const manimCmd = fs.existsSync(venvManim) ? venvManim : 'manim';
+const fullCmd = `${manimCmd} ${renderFlags} "${scriptPath}" "${sceneName}"`;
+console.log(`Executing: ${fullCmd}`);
+execSync(fullCmd, { stdio: 'inherit' });
 
 // Helper to recursively find PNG files matching sceneName
 function findPngFiles(dir, prefix) {
@@ -90,6 +78,12 @@ if (foundImages.length > 0) {
     const destPath = path.join(targetFramesDir, `frame_${paddedIdx}.png`);
     fs.copyFileSync(imgFile, destPath);
   });
+
+  // Clean up temporary media build output to avoid storing duplicates
+  if (fs.existsSync(path.join(workspaceDir, 'media'))) {
+    fs.rmSync(path.join(workspaceDir, 'media'), { recursive: true, force: true });
+    console.log(`[Clean] Temporary media cache removed.`);
+  }
 
   // Create topic manifest
   const topicManifestPath = path.join(workspaceDir, 'animations', topicFolder, 'manifest.json');

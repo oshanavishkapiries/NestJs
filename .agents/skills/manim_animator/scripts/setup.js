@@ -7,21 +7,12 @@ const SKILL_DIR = path.resolve(__dirname, '..');
 const CONFIG_FILE = path.join(SKILL_DIR, '.manim_config.json');
 
 console.log('==================================================');
-console.log('   Manim Multi-Runtime Setup (Node.js Engine)     ');
+console.log('   Manim Setup (Local Python Venv Engine)         ');
 console.log('==================================================\n');
 
 function commandExists(cmd) {
   try {
     execSync(`command -v ${cmd}`, { stdio: 'ignore' });
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-function isDockerActive() {
-  try {
-    execSync('docker ps', { stdio: 'ignore' });
     return true;
   } catch (e) {
     return false;
@@ -39,36 +30,25 @@ function getVersion(cmd) {
 const hasPython3 = commandExists('python3');
 const hasNode = commandExists('node');
 const hasFfmpeg = commandExists('ffmpeg');
-const hasApt = commandExists('apt');
-const hasDocker = isDockerActive();
+const venvManim = path.join(SKILL_DIR, '.venv', 'bin', 'manim');
+const hasVenvManim = fs.existsSync(venvManim);
 
-console.log('🔍 Device Capabilities Discovered:');
-console.log(`   [Node.js] : ${hasNode ? '✅ ' + getVersion('node') : '❌ Missing'}`);
-console.log(`   [Python3] : ${hasPython3 ? '✅ ' + getVersion('python3') : '❌ Missing'}`);
-console.log(`   [Docker]  : ${hasDocker ? '✅ Ready (Daemon active)' : '❌ Not available'}`);
-console.log(`   [FFmpeg]  : ${hasFfmpeg ? '✅ Installed' : '⚠️ Missing'}`);
-console.log(`   [Apt]     : ${hasApt ? '✅ Available' : '❌ Missing'}\n`);
+console.log('🔍 Environment Discovered:');
+console.log(`   [Python3]    : ${hasPython3 ? '✅ ' + getVersion('python3') : '❌ Missing'}`);
+console.log(`   [Node.js]    : ${hasNode ? '✅ ' + getVersion('node') : '❌ Missing'}`);
+console.log(`   [FFmpeg]     : ${hasFfmpeg ? '✅ Installed' : '⚠️ Missing'}`);
+console.log(`   [Local Venv] : ${hasVenvManim ? '✅ Ready (.venv/bin/manim)' : '⚠️ Missing'}\n`);
 
-let chosenMode = 'docker';
-if (hasDocker) {
-  chosenMode = 'docker';
-  console.log('🎯 BEST OPTION CHOSEN: [DOCKER ENGINE]');
-  console.log('   -> Docker daemon active: Renders using official manimcommunity/manim image.');
-  console.log('   -> Zero local C/C++ header compilation or LaTeX setup required.\n');
-} else if (hasNode) {
-  chosenMode = 'node_venv';
-  console.log('🎯 BEST OPTION CHOSEN: [NODE.JS + PYTHON HYBRID]\n');
-} else {
-  chosenMode = 'venv';
-  console.log('🎯 BEST OPTION CHOSEN: [NATIVE PYTHON VENV]\n');
-}
+const chosenMode = 'venv';
+console.log('🎯 OPTION CHOSEN: [NATIVE PYTHON VENV]');
+console.log('   -> Dependencies encapsulated inside project .venv directory.\n');
 
 const config = {
   mode: chosenMode,
-  has_docker: hasDocker,
   has_node: hasNode,
   has_python3: hasPython3,
   has_ffmpeg: hasFfmpeg,
+  has_venv_manim: hasVenvManim,
   timestamp: new Date().toISOString()
 };
 
