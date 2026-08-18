@@ -90,7 +90,14 @@ canvas#drawingCanvas.mode-select {
   cursor: default;
 }
 
-canvas#drawingCanvas.mode-pen {
+canvas#drawingCanvas.mode-pen,
+canvas#drawingCanvas.mode-rect,
+canvas#drawingCanvas.mode-round_rect,
+canvas#drawingCanvas.mode-circle,
+canvas#drawingCanvas.mode-diamond,
+canvas#drawingCanvas.mode-arrow,
+canvas#drawingCanvas.mode-double_arrow,
+canvas#drawingCanvas.mode-line {
   z-index: 30;
   pointer-events: auto;
   cursor: crosshair;

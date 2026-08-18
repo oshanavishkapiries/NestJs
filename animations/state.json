@@ -2,11 +2,11 @@
   "activeTopic": null,
   "currentFrame": 0,
   "widgetPos": null,
-  "activeTool": "select",
-  "strokeColor": "#ef4444",
+  "activeTool": "pen",
+  "strokeColor": "#ff7733",
   "strokeWidth": 4,
-  "panX": 0,
-  "panY": 0,
+  "panX": -161.15313720703125,
+  "panY": 26.290618896484375,
   "zoom": 1,
-  "updatedAt": "2026-08-15T05:57:59.528Z"
+  "updatedAt": "2026-08-18T15:51:57.145Z"
 }

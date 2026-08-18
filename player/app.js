@@ -435,14 +435,24 @@ class FramePlayer {
     // State
     this.manifest = null;
     this.activeWidget = null;
-    this.activeTool = 'select'; // 'select' | 'pen' | 'text' | 'eraser'
-    this.strokeColor = '#ef4444';
+    this.activeTool = 'select'; // 'select' | 'pen' | 'rect' | 'round_rect' | 'circle' | 'diamond' | 'arrow' | 'double_arrow' | 'line' | 'text' | 'eraser'
+    this.strokeColor = '#39bae6';
     this.strokeWidth = 4;
     this.activeCategory = null;
     this.hoveredCategory = null;
     this.isDrawing = false;
     this.currentStroke = null;
     this.boardStrokes = [];
+
+    // Shape Selection, Move & Resize State
+    this.selectedStrokeIdx = null;
+    this.isMovingShape = false;
+    this.isResizingShape = false;
+    this.resizeHandleType = null;
+    this.shapeDragStart = null;
+    this.initialShapeState = null;
+    this.lastPointerDownTime = 0;
+    this.lastPointerDownPos = { x: 0, y: 0 };
 
     // Excalidraw Infinite Canvas Camera State
     this.panX = 0;
@@ -612,72 +622,80 @@ class FramePlayer {
     const rOuterIn = 88;  // Outer Sub-menu Inner Radius
     const rOuterOut = 138; // Outer Sub-menu Outer Radius
 
-    // 8 Direct Primary Wedges ($45° per slice)
+    // 9 Primary Ring Wedges (40° per slice)
     const categories = [
       {
         id: 'color',
         title: 'COLOR',
         startAngle: -90,
-        endAngle: -45,
+        endAngle: -50,
         type: 'expand',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
       },
       {
         id: 'size',
         title: 'SIZE',
-        startAngle: -45,
-        endAngle: 0,
+        startAngle: -50,
+        endAngle: -10,
         type: 'expand',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`
+      },
+      {
+        id: 'shape',
+        title: 'SHAPE',
+        startAngle: -10,
+        endAngle: 30,
+        type: 'expand',
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>`
       },
       {
         id: 'select',
         title: 'SELECT',
-        startAngle: 0,
-        endAngle: 45,
+        startAngle: 30,
+        endAngle: 70,
         type: 'tool',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>`
       },
       {
         id: 'pen',
         title: 'PEN',
-        startAngle: 45,
-        endAngle: 90,
+        startAngle: 70,
+        endAngle: 110,
         type: 'tool',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>`
       },
       {
         id: 'text',
         title: 'TEXT',
-        startAngle: 90,
-        endAngle: 135,
+        startAngle: 110,
+        endAngle: 150,
         type: 'tool',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>`
       },
       {
         id: 'eraser',
         title: 'ERASER',
-        startAngle: 135,
-        endAngle: 180,
+        startAngle: 150,
+        endAngle: 190,
         type: 'tool',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4"></path></svg>`
       },
       {
         id: 'undo',
         title: 'UNDO',
-        startAngle: 180,
-        endAngle: 225,
+        startAngle: 190,
+        endAngle: 230,
         type: 'action',
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`
       },
       {
         id: 'clear',
         title: 'CLEAR',
-        startAngle: 225,
+        startAngle: 230,
         endAngle: 270,
         type: 'action',
         isDanger: true,
-        iconSvg: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+        iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
       }
     ];
 
@@ -690,8 +708,9 @@ class FramePlayer {
       const d = this.describeArcPath(cx, cy, rInner, rPrimary, cat.startAngle, cat.endAngle);
       const isHovered = this.hoveredCategory === cat.id;
       const isToolActive = (cat.type === 'tool' && this.activeTool === cat.id);
+      const isShapeToolActive = (cat.id === 'shape' && ['rect', 'round_rect', 'circle', 'diamond', 'arrow', 'double_arrow', 'line'].includes(this.activeTool));
       const isActiveCategory = (this.activeCategory === cat.id);
-      const isHighlighted = isHovered || isToolActive || isActiveCategory;
+      const isHighlighted = isHovered || isToolActive || isShapeToolActive || isActiveCategory;
 
       svgHtml += `<path class="primary-wedge ${cat.isDanger ? 'danger-wedge' : ''} ${isHighlighted ? 'active-wedge' : ''}" data-cat="${cat.id}" data-type="${cat.type}" d="${d}"></path>`;
 
@@ -708,13 +727,13 @@ class FramePlayer {
       `;
     });
 
-    // 2. Render Expanded Outer Sub-Menu Arc for COLOR and SIZE
+    // 2. Render Expanded Outer Sub-Menu Arc for COLOR, SIZE, and SHAPE
     if (this.activeCategory === 'color') {
       const startA = -110, endA = -25;
       const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
       svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
 
-      const colors = ['#ef4444', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ffffff', '#06b6d4'];
+      const colors = ['#39bae6', '#ffb454', '#aad064', '#ff7733', '#d4bfff', '#f29e74', '#e6e1cf'];
       const angleStep = (endA - startA) / colors.length;
       const rSub = (rOuterIn + rOuterOut) / 2;
 
@@ -752,6 +771,38 @@ class FramePlayer {
 
         submenuHtml += `
           <div class="submenu-option-item" data-opt-size="${s.width}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
+            <button class="submenu-size-badge ${isSel ? 'active' : ''}">
+              ${s.label}
+            </button>
+          </div>
+        `;
+      });
+    } else if (this.activeCategory === 'shape') {
+      const startA = -35, endA = 75;
+      const dOuter = this.describeArcPath(cx, cy, rOuterIn, rOuterOut, startA, endA);
+      svgHtml += `<path class="outer-arc-bg" d="${dOuter}"></path>`;
+
+      const shapesList = [
+        { id: 'rect', label: 'Box' },
+        { id: 'round_rect', label: 'R-Box' },
+        { id: 'circle', label: 'Circle' },
+        { id: 'diamond', label: 'Diamond' },
+        { id: 'arrow', label: 'Arrow' },
+        { id: 'double_arrow', label: '2-Arrow' },
+        { id: 'line', label: 'Line' }
+      ];
+
+      const angleStep = (endA - startA) / shapesList.length;
+      const rSub = (rOuterIn + rOuterOut) / 2;
+
+      shapesList.forEach((s, idx) => {
+        const itemAngleRad = ((startA + angleStep * idx + angleStep / 2) * Math.PI) / 180;
+        const itemX = cx + rSub * Math.cos(itemAngleRad);
+        const itemY = cy + rSub * Math.sin(itemAngleRad);
+        const isSel = this.activeTool === s.id;
+
+        submenuHtml += `
+          <div class="submenu-option-item" data-opt-shape="${s.id}" style="left:${itemX}px; top:${itemY}px; transform:translate(-50%, -50%);">
             <button class="submenu-size-badge ${isSel ? 'active' : ''}">
               ${s.label}
             </button>
@@ -831,6 +882,17 @@ class FramePlayer {
         e.preventDefault();
         e.stopPropagation();
         this.strokeWidth = parseInt(item.dataset.optSize, 10);
+        this.saveGlobalState();
+        this.hideGtaWheel();
+      });
+    });
+
+    const shapeItems = this.submenuContainer.querySelectorAll('[data-opt-shape]');
+    shapeItems.forEach(item => {
+      item.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.setTool(item.dataset.optShape);
         this.saveGlobalState();
         this.hideGtaWheel();
       });
@@ -1135,6 +1197,23 @@ class FramePlayer {
           this.activeWidget.renderFrame(this.activeWidget.currentFrameIdx);
           this.activeWidget.updateDisplay();
           break;
+        case 'escape':
+          if (this.selectedStrokeIdx !== null) {
+            e.preventDefault();
+            this.selectedStrokeIdx = null;
+            this.redrawDrawingCanvas();
+          }
+          break;
+        case 'delete':
+        case 'backspace':
+          if (this.selectedStrokeIdx !== null && this.boardStrokes[this.selectedStrokeIdx]) {
+            e.preventDefault();
+            this.boardStrokes.splice(this.selectedStrokeIdx, 1);
+            this.selectedStrokeIdx = null;
+            this.redrawDrawingCanvas();
+            this.saveTopicAnnotations();
+          }
+          break;
       }
     });
   }
@@ -1154,20 +1233,178 @@ class FramePlayer {
     this.drawCanvas.className = `mode-${toolId}`;
 
     // Dynamic Z-Index for Drawing ON TOP of Video
-    if (toolId === 'select') {
-      this.drawCanvas.style.zIndex = '10';
-      this.drawCanvas.style.pointerEvents = 'none';
-    } else {
-      this.drawCanvas.style.zIndex = '30';
-      this.drawCanvas.style.pointerEvents = 'auto';
+    this.drawCanvas.style.zIndex = '30';
+    this.drawCanvas.style.pointerEvents = 'auto';
+
+    if (toolId !== 'select') {
+      this.selectedStrokeIdx = null;
+      this.redrawDrawingCanvas();
     }
 
     this.saveGlobalState();
   }
 
+  getShapeBounds(shape) {
+    if (!shape) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    if (shape.type === 'rect' || shape.type === 'round_rect' || shape.type === 'diamond') {
+      const minX = Math.min(shape.x, shape.x + shape.width);
+      const maxX = Math.max(shape.x, shape.x + shape.width);
+      const minY = Math.min(shape.y, shape.y + shape.height);
+      const maxY = Math.max(shape.y, shape.y + shape.height);
+      return { minX, minY, maxX, maxY };
+    } else if (shape.type === 'circle') {
+      return {
+        minX: shape.cx - shape.r,
+        maxX: shape.cx + shape.r,
+        minY: shape.cy - shape.r,
+        maxY: shape.cy + shape.r
+      };
+    } else if (shape.type === 'arrow' || shape.type === 'double_arrow' || shape.type === 'line') {
+      return {
+        minX: Math.min(shape.x1, shape.x2),
+        maxX: Math.max(shape.x1, shape.x2),
+        minY: Math.min(shape.y1, shape.y2),
+        maxY: Math.max(shape.y1, shape.y2)
+      };
+    } else if (shape.type === 'text') {
+      const w = (shape.text || '').length * (shape.fontSize || 24) * 0.65;
+      const h = shape.fontSize || 24;
+      return {
+        minX: shape.x,
+        maxX: shape.x + w,
+        minY: shape.y - h / 2,
+        maxY: shape.y + h / 2
+      };
+    } else if (shape.points && shape.points.length > 0) {
+      const xs = shape.points.map(p => p.x);
+      const ys = shape.points.map(p => p.y);
+      return {
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys)
+      };
+    }
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+
+  isPointInShape(worldPos, shape) {
+    const b = this.getShapeBounds(shape);
+    const margin = 14 / this.zoom;
+    return (
+      worldPos.x >= b.minX - margin &&
+      worldPos.x <= b.maxX + margin &&
+      worldPos.y >= b.minY - margin &&
+      worldPos.y <= b.maxY + margin
+    );
+  }
+
+  getResizeHandleAt(worldPos, bounds) {
+    if (!bounds) return null;
+    const margin = 14 / this.zoom;
+    const { minX, minY, maxX, maxY } = bounds;
+
+    if (Math.hypot(worldPos.x - minX, worldPos.y - minY) <= margin) return 'nw';
+    if (Math.hypot(worldPos.x - maxX, worldPos.y - minY) <= margin) return 'ne';
+    if (Math.hypot(worldPos.x - maxX, worldPos.y - maxY) <= margin) return 'se';
+    if (Math.hypot(worldPos.x - minX, worldPos.y - maxY) <= margin) return 'sw';
+
+    return null;
+  }
+
+  moveShape(shape, dx, dy, initialShape) {
+    if (!shape || !initialShape) return;
+    if (shape.type === 'rect' || shape.type === 'round_rect' || shape.type === 'diamond' || shape.type === 'text') {
+      shape.x = initialShape.x + dx;
+      shape.y = initialShape.y + dy;
+    } else if (shape.type === 'circle') {
+      shape.cx = initialShape.cx + dx;
+      shape.cy = initialShape.cy + dy;
+    } else if (shape.type === 'arrow' || shape.type === 'double_arrow' || shape.type === 'line') {
+      shape.x1 = initialShape.x1 + dx;
+      shape.y1 = initialShape.y1 + dy;
+      shape.x2 = initialShape.x2 + dx;
+      shape.y2 = initialShape.y2 + dy;
+    } else if (shape.points && initialShape.points) {
+      shape.points = initialShape.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    }
+  }
+
+  resizeShape(shape, handleType, dx, dy, initialShape) {
+    if (!shape || !initialShape) return;
+    if (shape.type === 'rect' || shape.type === 'round_rect' || shape.type === 'diamond') {
+      if (handleType === 'se') {
+        shape.width = Math.max(10, initialShape.width + dx);
+        shape.height = Math.max(10, initialShape.height + dy);
+      } else if (handleType === 'sw') {
+        shape.x = initialShape.x + dx;
+        shape.width = Math.max(10, initialShape.width - dx);
+        shape.height = Math.max(10, initialShape.height + dy);
+      } else if (handleType === 'ne') {
+        shape.y = initialShape.y + dy;
+        shape.width = Math.max(10, initialShape.width + dx);
+        shape.height = Math.max(10, initialShape.height - dy);
+      } else if (handleType === 'nw') {
+        shape.x = initialShape.x + dx;
+        shape.y = initialShape.y + dy;
+        shape.width = Math.max(10, initialShape.width - dx);
+        shape.height = Math.max(10, initialShape.height - dy);
+      }
+    } else if (shape.type === 'circle') {
+      const delta = (dx + dy) / 2;
+      shape.r = Math.max(5, initialShape.r + delta);
+    } else if (shape.type === 'arrow' || shape.type === 'double_arrow' || shape.type === 'line') {
+      if (handleType === 'se' || handleType === 'ne') {
+        shape.x2 = initialShape.x2 + dx;
+        shape.y2 = initialShape.y2 + dy;
+      } else {
+        shape.x1 = initialShape.x1 + dx;
+        shape.y1 = initialShape.y1 + dy;
+      }
+    }
+  }
+
+  renderSelectionBox(shape) {
+    if (!shape) return;
+    const b = this.getShapeBounds(shape);
+    const pad = 6 / this.zoom;
+    const handleSize = 8 / this.zoom;
+
+    const minX = b.minX - pad;
+    const minY = b.minY - pad;
+    const maxX = b.maxX + pad;
+    const maxY = b.maxY + pad;
+
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = '#39bae6';
+    this.drawCtx.lineWidth = 1.5 / this.zoom;
+    this.drawCtx.setLineDash([4 / this.zoom, 4 / this.zoom]);
+    this.drawCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+    this.drawCtx.restore();
+
+    // 4 Corner Handles
+    const handles = [
+      { x: minX, y: minY },
+      { x: maxX, y: minY },
+      { x: maxX, y: maxY },
+      { x: minX, y: maxY }
+    ];
+
+    this.drawCtx.save();
+    this.drawCtx.fillStyle = '#ffffff';
+    this.drawCtx.strokeStyle = '#39bae6';
+    this.drawCtx.lineWidth = 1.5 / this.zoom;
+
+    handles.forEach(h => {
+      this.drawCtx.fillRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
+      this.drawCtx.strokeRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
+    });
+    this.drawCtx.restore();
+  }
+
   onPointerDown(e) {
-    // 1. Pan Trigger: Spacebar pressed OR Middle mouse button (button === 1) OR Select tool on empty space
-    if (this.isSpacePressed || e.button === 1 || this.activeTool === 'select') {
+    // 1. Pan Trigger: Spacebar pressed OR Middle mouse button (button === 1)
+    if (this.isSpacePressed || e.button === 1) {
       this.isPanning = true;
       this.panStartX = e.clientX - this.panX;
       this.panStartY = e.clientY - this.panY;
@@ -1179,8 +1416,70 @@ class FramePlayer {
       this.activeWidget.pause();
     }
 
-    // Convert Screen Pointer to World Coordinates
     const world = this.screenToWorld(e.clientX, e.clientY);
+
+    // 2. Select Tool Interactions: Hit test shape selection, resizing, or moving
+    if (this.activeTool === 'select') {
+      const now = Date.now();
+      const isDoubleClick = (now - this.lastPointerDownTime < 350) &&
+                            (Math.hypot(e.clientX - this.lastPointerDownPos.x, e.clientY - this.lastPointerDownPos.y) < 20);
+      this.lastPointerDownTime = now;
+      this.lastPointerDownPos = { x: e.clientX, y: e.clientY };
+
+      // A. If already editing a shape (selectedStrokeIdx !== null)
+      if (this.selectedStrokeIdx !== null) {
+        const selShape = this.boardStrokes[this.selectedStrokeIdx];
+        if (selShape) {
+          const bounds = this.getShapeBounds(selShape);
+          const handle = this.getResizeHandleAt(world, bounds);
+          if (handle) {
+            this.isResizingShape = true;
+            this.resizeHandleType = handle;
+            this.shapeDragStart = { x: world.x, y: world.y };
+            this.initialShapeState = JSON.parse(JSON.stringify(selShape));
+            return;
+          }
+
+          if (this.isPointInShape(world, selShape)) {
+            this.isMovingShape = true;
+            this.shapeDragStart = { x: world.x, y: world.y };
+            this.initialShapeState = JSON.parse(JSON.stringify(selShape));
+            return;
+          }
+        }
+      }
+
+      // B. Double-click on shape -> Enter Edit Mode (show resize handles & enable drag)
+      if (isDoubleClick) {
+        let hitIdx = null;
+        for (let i = this.boardStrokes.length - 1; i >= 0; i--) {
+          if (this.isPointInShape(world, this.boardStrokes[i])) {
+            hitIdx = i;
+            break;
+          }
+        }
+
+        if (hitIdx !== null) {
+          this.selectedStrokeIdx = hitIdx;
+          this.isMovingShape = true;
+          this.shapeDragStart = { x: world.x, y: world.y };
+          this.initialShapeState = JSON.parse(JSON.stringify(this.boardStrokes[hitIdx]));
+          this.redrawDrawingCanvas();
+          return;
+        }
+      }
+
+      // C. Single click or click outside: Exit Edit Mode & pan canvas
+      if (this.selectedStrokeIdx !== null) {
+        this.selectedStrokeIdx = null;
+        this.redrawDrawingCanvas();
+      }
+      this.isPanning = true;
+      this.panStartX = e.clientX - this.panX;
+      this.panStartY = e.clientY - this.panY;
+      this.workspace.classList.add('is-panning-active');
+      return;
+    }
 
     if (this.activeTool === 'pen') {
       this.isDrawing = true;
@@ -1189,6 +1488,82 @@ class FramePlayer {
         color: this.strokeColor,
         width: this.strokeWidth,
         points: [world]
+      };
+    } else if (this.activeTool === 'rect') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'rect',
+        x: world.x,
+        y: world.y,
+        width: 0,
+        height: 0,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'round_rect') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'round_rect',
+        x: world.x,
+        y: world.y,
+        width: 0,
+        height: 0,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'circle') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'circle',
+        cx: world.x,
+        cy: world.y,
+        r: 0,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'diamond') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'diamond',
+        x: world.x,
+        y: world.y,
+        width: 0,
+        height: 0,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'arrow') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'arrow',
+        x1: world.x,
+        y1: world.y,
+        x2: world.x,
+        y2: world.y,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'double_arrow') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'double_arrow',
+        x1: world.x,
+        y1: world.y,
+        x2: world.x,
+        y2: world.y,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
+      };
+    } else if (this.activeTool === 'line') {
+      this.isDrawing = true;
+      this.currentStroke = {
+        type: 'line',
+        x1: world.x,
+        y1: world.y,
+        x2: world.x,
+        y2: world.y,
+        color: this.strokeColor,
+        widthVal: this.strokeWidth
       };
     } else if (this.activeTool === 'text') {
       this.createInlineTextInput(e.clientX, e.clientY, world.x, world.y);
@@ -1255,12 +1630,41 @@ class FramePlayer {
       return;
     }
 
+    if (this.isMovingShape && this.selectedStrokeIdx !== null) {
+      const world = this.screenToWorld(e.clientX, e.clientY);
+      const dx = world.x - this.shapeDragStart.x;
+      const dy = world.y - this.shapeDragStart.y;
+      this.moveShape(this.boardStrokes[this.selectedStrokeIdx], dx, dy, this.initialShapeState);
+      this.redrawDrawingCanvas();
+      return;
+    }
+
+    if (this.isResizingShape && this.selectedStrokeIdx !== null) {
+      const world = this.screenToWorld(e.clientX, e.clientY);
+      const dx = world.x - this.shapeDragStart.x;
+      const dy = world.y - this.shapeDragStart.y;
+      this.resizeShape(this.boardStrokes[this.selectedStrokeIdx], this.resizeHandleType, dx, dy, this.initialShapeState);
+      this.redrawDrawingCanvas();
+      return;
+    }
+
     if (!this.isDrawing) return;
 
     const world = this.screenToWorld(e.clientX, e.clientY);
 
     if (this.activeTool === 'pen') {
       this.currentStroke.points.push(world);
+      this.redrawDrawingCanvas();
+    } else if (this.activeTool === 'rect' || this.activeTool === 'round_rect' || this.activeTool === 'diamond') {
+      this.currentStroke.width = world.x - this.currentStroke.x;
+      this.currentStroke.height = world.y - this.currentStroke.y;
+      this.redrawDrawingCanvas();
+    } else if (this.activeTool === 'circle') {
+      this.currentStroke.r = Math.hypot(world.x - this.currentStroke.cx, world.y - this.currentStroke.cy);
+      this.redrawDrawingCanvas();
+    } else if (this.activeTool === 'arrow' || this.activeTool === 'double_arrow' || this.activeTool === 'line') {
+      this.currentStroke.x2 = world.x;
+      this.currentStroke.y2 = world.y;
       this.redrawDrawingCanvas();
     } else if (this.activeTool === 'eraser') {
       this.eraseStrokesNear(world);
@@ -1275,12 +1679,34 @@ class FramePlayer {
       return;
     }
 
+    if (this.isMovingShape || this.isResizingShape) {
+      this.isMovingShape = false;
+      this.isResizingShape = false;
+      this.shapeDragStart = null;
+      this.initialShapeState = null;
+      this.saveTopicAnnotations();
+      return;
+    }
+
     if (!this.isDrawing) return;
     this.isDrawing = false;
 
-    if (this.activeTool === 'pen' && this.currentStroke && this.currentStroke.points.length > 1) {
-      this.boardStrokes.push(this.currentStroke);
-      this.saveTopicAnnotations();
+    if (this.currentStroke) {
+      let isValid = false;
+      if (this.currentStroke.type === 'stroke' && this.currentStroke.points && this.currentStroke.points.length > 1) {
+        isValid = true;
+      } else if ((this.currentStroke.type === 'rect' || this.currentStroke.type === 'round_rect' || this.currentStroke.type === 'diamond') && (Math.abs(this.currentStroke.width) > 2 || Math.abs(this.currentStroke.height) > 2)) {
+        isValid = true;
+      } else if (this.currentStroke.type === 'circle' && this.currentStroke.r > 2) {
+        isValid = true;
+      } else if ((this.currentStroke.type === 'arrow' || this.currentStroke.type === 'double_arrow' || this.currentStroke.type === 'line') && Math.hypot(this.currentStroke.x2 - this.currentStroke.x1, this.currentStroke.y2 - this.currentStroke.y1) > 3) {
+        isValid = true;
+      }
+
+      if (isValid) {
+        this.boardStrokes.push(this.currentStroke);
+        this.saveTopicAnnotations();
+      }
     }
     this.currentStroke = null;
     this.redrawDrawingCanvas();
@@ -1294,6 +1720,20 @@ class FramePlayer {
       if (item.type === 'text') {
         const dist = Math.hypot(item.x - worldPos.x, item.y - worldPos.y);
         return dist > eraseRadius + (item.fontSize || 20);
+      } else if (item.type === 'rect' || item.type === 'round_rect' || item.type === 'diamond') {
+        const midX = item.x + item.width / 2;
+        const midY = item.y + item.height / 2;
+        const dist = Math.hypot(midX - worldPos.x, midY - worldPos.y);
+        return dist > eraseRadius + Math.max(Math.abs(item.width), Math.abs(item.height)) / 2;
+      } else if (item.type === 'circle') {
+        const dist = Math.hypot(item.cx - worldPos.x, item.cy - worldPos.y);
+        return dist > eraseRadius + item.r;
+      } else if (item.type === 'arrow' || item.type === 'double_arrow' || item.type === 'line') {
+        const midX = (item.x1 + item.x2) / 2;
+        const midY = (item.y1 + item.y2) / 2;
+        const dist = Math.hypot(midX - worldPos.x, midY - worldPos.y);
+        const len = Math.hypot(item.x2 - item.x1, item.y2 - item.y1);
+        return dist > eraseRadius + len / 2;
       } else if (item.points) {
         return !item.points.some(pt => {
           const dist = Math.hypot(pt.x - worldPos.x, pt.y - worldPos.y);
@@ -1351,15 +1791,186 @@ class FramePlayer {
     this.boardStrokes.forEach(item => {
       if (item.type === 'text') {
         this.renderTextItem(item);
+      } else if (item.type === 'rect') {
+        this.renderRectItem(item);
+      } else if (item.type === 'round_rect') {
+        this.renderRoundRectItem(item);
+      } else if (item.type === 'circle') {
+        this.renderCircleItem(item);
+      } else if (item.type === 'diamond') {
+        this.renderDiamondItem(item);
+      } else if (item.type === 'arrow') {
+        this.renderArrowItem(item);
+      } else if (item.type === 'double_arrow') {
+        this.renderDoubleArrowItem(item);
+      } else if (item.type === 'line') {
+        this.renderLineItem(item);
       } else {
         this.renderStroke(item);
       }
     });
 
     if (this.currentStroke) {
-      this.renderStroke(this.currentStroke);
+      if (this.currentStroke.type === 'rect') {
+        this.renderRectItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'round_rect') {
+        this.renderRoundRectItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'circle') {
+        this.renderCircleItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'diamond') {
+        this.renderDiamondItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'arrow') {
+        this.renderArrowItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'double_arrow') {
+        this.renderDoubleArrowItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'line') {
+        this.renderLineItem(this.currentStroke);
+      } else if (this.currentStroke.type === 'stroke') {
+        this.renderStroke(this.currentStroke);
+      }
     }
 
+    if (this.selectedStrokeIdx !== null && this.boardStrokes[this.selectedStrokeIdx]) {
+      this.renderSelectionBox(this.boardStrokes[this.selectedStrokeIdx]);
+    }
+
+    this.drawCtx.restore();
+  }
+
+  renderRectItem(item) {
+    if (!item) return;
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = item.color || '#39bae6';
+    this.drawCtx.lineWidth = item.widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+    this.drawCtx.strokeRect(item.x, item.y, item.width, item.height);
+    this.drawCtx.restore();
+  }
+
+  renderRoundRectItem(item) {
+    if (!item) return;
+    const radius = Math.min(16, Math.abs(item.width) / 4, Math.abs(item.height) / 4);
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = item.color || '#39bae6';
+    this.drawCtx.lineWidth = item.widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+    this.drawCtx.beginPath();
+    if (this.drawCtx.roundRect) {
+      this.drawCtx.roundRect(item.x, item.y, item.width, item.height, radius);
+    } else {
+      this.drawCtx.strokeRect(item.x, item.y, item.width, item.height);
+    }
+    this.drawCtx.stroke();
+    this.drawCtx.restore();
+  }
+
+  renderCircleItem(item) {
+    if (!item || item.r <= 0) return;
+    this.drawCtx.save();
+    this.drawCtx.beginPath();
+    this.drawCtx.strokeStyle = item.color || '#39bae6';
+    this.drawCtx.lineWidth = item.widthVal || 3;
+    this.drawCtx.arc(item.cx, item.cy, item.r, 0, 2 * Math.PI);
+    this.drawCtx.stroke();
+    this.drawCtx.restore();
+  }
+
+  renderDiamondItem(item) {
+    if (!item) return;
+    const { x, y, width, height, color, widthVal } = item;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = color || '#39bae6';
+    this.drawCtx.lineWidth = widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(cx, y);
+    this.drawCtx.lineTo(x + width, cy);
+    this.drawCtx.lineTo(cx, y + height);
+    this.drawCtx.lineTo(x, cy);
+    this.drawCtx.closePath();
+    this.drawCtx.stroke();
+    this.drawCtx.restore();
+  }
+
+  renderArrowItem(item) {
+    if (!item) return;
+    const { x1, y1, x2, y2, color, widthVal } = item;
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLen = Math.max(12, (widthVal || 3) * 3.5);
+
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = color || '#39bae6';
+    this.drawCtx.lineWidth = widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+
+    // Main Shaft
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x1, y1);
+    this.drawCtx.lineTo(x2, y2);
+    this.drawCtx.stroke();
+
+    // Crisp Excalidraw V-Arrowhead at (x2, y2)
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+    this.drawCtx.lineTo(x2, y2);
+    this.drawCtx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+    this.drawCtx.stroke();
+    this.drawCtx.restore();
+  }
+
+  renderDoubleArrowItem(item) {
+    if (!item) return;
+    const { x1, y1, x2, y2, color, widthVal } = item;
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLen = Math.max(12, (widthVal || 3) * 3.5);
+
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = color || '#39bae6';
+    this.drawCtx.lineWidth = widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+
+    // Main Shaft
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x1, y1);
+    this.drawCtx.lineTo(x2, y2);
+    this.drawCtx.stroke();
+
+    // Arrowhead at (x2, y2)
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+    this.drawCtx.lineTo(x2, y2);
+    this.drawCtx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+    this.drawCtx.stroke();
+
+    // Arrowhead at (x1, y1)
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x1 + headLen * Math.cos(angle - Math.PI / 6), y1 + headLen * Math.sin(angle - Math.PI / 6));
+    this.drawCtx.lineTo(x1, y1);
+    this.drawCtx.lineTo(x1 + headLen * Math.cos(angle + Math.PI / 6), y1 + headLen * Math.sin(angle + Math.PI / 6));
+    this.drawCtx.stroke();
+    this.drawCtx.restore();
+  }
+
+  renderLineItem(item) {
+    if (!item) return;
+    const { x1, y1, x2, y2, color, widthVal } = item;
+    this.drawCtx.save();
+    this.drawCtx.strokeStyle = color || '#39bae6';
+    this.drawCtx.lineWidth = widthVal || 3;
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(x1, y1);
+    this.drawCtx.lineTo(x2, y2);
+    this.drawCtx.stroke();
     this.drawCtx.restore();
   }
 

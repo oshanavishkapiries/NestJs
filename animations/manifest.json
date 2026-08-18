@@ -1,3 +1,12 @@
 {
-  "topics": []
+  "topics": [
+    {
+      "id": "excalidraw_demo",
+      "title": "Main Scene",
+      "folder": "excalidraw_demo",
+      "resolution": "720p",
+      "total_frames": 212,
+      "fps": 30
+    }
+  ]
 }
